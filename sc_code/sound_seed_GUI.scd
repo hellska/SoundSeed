@@ -258,27 +258,16 @@
 	~ss_mapping_panel_label = StaticText(~ss_mapping_panel_gui,Rect(0,0,600,20))
 	.string_("MAPPING PANEL",Color.black,Color.grey).align_(\center);
 
-	~ss_file_feature_button = Button(~ss_mapping_panel_gui,Rect(30,30,120,20))
-	.states_([["File features"],["File features",Color.black,Color.green]])
-	.action_{|me|
-		case
-		{me.value==0} { /* stop capture from file */ }
-		{me.value==1} { /* start captre from file */ };
-	};
-
-	~ss_soundin_feature_button = Button(~ss_mapping_panel_gui,Rect(180,30,120,20))
-	.states_([["Soundin features"],["Soundin features",Color.black,Color.green]])
-	.action_{|me|
-		case
-		{me.value==0} { /* stop capture from input */ }
-		{me.value==1} { /* start captre from input */ };
-	};
+	~ss_play_file_button = Button(~ss_mapping_panel_gui,Rect(210,20,90,40))
+	.states_([["P L A Y",Color.black,Color.green]])
+	.action_{|me| ~ss_filebuf.play; };
 	// drag and drop area for files
 	~ss_dragFile = DragSink(~ss_mapping_panel_gui,Rect(310,20,280,40))
 	.align_(\center).string="Drag a file here";
 	~ss_dragFile.receiveDragHandler = {|v|
 		var filename;
 		~ss_dragFile.background_(Color.red);
+		~ss_dragFile.string_("N O T   L O A D E D!");
 		filename = View.currentDrag.asString;
 		if (File.type(filename)=="regular".asSymbol)
 		{ ~ss_filebuf = ~ss_loadDragFileInBuffer.value(filename, ~ss_dragFile) }
@@ -290,8 +279,8 @@
 	~ss_onoff_map1 = Button(~ss_mapping_panel_gui,Rect(20,80,20,20))
 	.states_([["I/O"],["I/O",Color.black,Color.green]])
 	.action_{|me| case
-		{me.value==0} { /* off feature */ ~ss_onoff_map1_func.value(me.value) }
-		{me.value==1} { /* on feature*/ ~ss_onoff_map1_func.value(me.value) }; };
+		{me.value==0} { /* off feature */ ~ss_onoff_map1_func.value(me.value,0) }
+		{me.value==1} { /* on feature*/ ~ss_onoff_map1_func.value(me.value,0) }; };
 	~ss_from_in1 = Button(~ss_mapping_panel_gui,Rect(60,80,20,20))
 	.states_([["In"],["In",Color.black,Color.green]])
 	.action_{|me| case
@@ -328,37 +317,45 @@
 	var buff, filename;
 	filename = inputfile.asString.split($/);
 	filename = filename[filename.size-1];
-/*	buff = Buffer.readChannel(s,inputfile.absolutePath,channels:0,action:{
-		{ drag_obj.string_("file "++filename++" loaded!");
-			drag_obj.background_(Color.clear);}.defer;
-	}); */
 	buff = Buffer.read(s,inputfile.absolutePath,action:{
 		{ drag_obj.string_("file "++filename++" loaded!");
 			drag_obj.background_(Color.clear);}.defer;
 	});
 	buff
 };
-// check if the input is selected and returns if it is true
-~ss_extractors = Array.fill(5,0);
+// check the input of the feature
 ~ss_feature_input = {|action,numer|
 	// the function returns -1 if nothing selected, 1 for soundin, 2 for file input
 	var return, who;
 	who = "~ss_extractor"+numer.asSymbol;
-	return = 255;
+	return = -255;
 	if (~ss_from_in1.value==0) {
 		if (~ss_from_file1.value==0) {
 			"both file and soundin off - there's some error check implementation".postln;
 			return = -1;
 		} {
 			if (action==0) { // spengo
-				("spengo"+who).postln;
 				~ss_extractors[numer].set(\gate, 0);
+				"OFF input from file!".postln;
+				return = 2;
 			} { // accendo
-				("accendo"+who).postln;
-				~ss_extractors.put(numer,Synth(\filePitchDetectControl,[\buffer, ~ss_filebuf, \outCbus, ~featurebus1]););
+				// controllo il buffer
+				if (~ss_filebuf.numFrames!=nil) {
+					~ss_extractors.put(numer,
+						Synth(\filePitchDetectControl,
+							[\buffer, ~ss_filebuf,
+								\outCbus, ~featurebus[numer]]
+						);
+					);
+					~currentbus = ~featurebus[numer];
+					"ON input from file!".postln;
+					return = 2;
+				} {
+					"Buffer not set, load an audio file".postln;
+					return = -2;
+				};
 			};
-			"input from file!".postln;
-			return = 2;
+
 		};
 	};
 	if (~ss_from_in1.value==1) {
@@ -367,43 +364,66 @@
 			~ss_extractors[numer].set(\gate, 0);
 		} { // accendo
 			("accendo"+who).postln;
-			~ss_extractors.put(numer,Synth(\inPitchDetectControl,[\outCbus, ~featurebus1]););
+			~ss_extractors.put(numer,
+				Synth(\inPitchDetectControl,
+					[\outCbus, ~featurebus[numer]]
+				);
+			);
+			~currentbus = ~featurebus[numer];
 		};
 		"input from Soundin!".postln;
 		return = 1;
 	};
 	return
 };
-~ss_feature_input.value(1,1);
-//
-~ss_onoff_map1_func = {|action|
+// check the feature selected
+~ss_mapping_set = {|action,number|
+	var feature,control;
+	feature = ~ss_feature_select.value;
+	control = ~ss_param_select.value;
+	("Feat:"+feature+"Control:"+control).postln;
+	// retrieve the function from the two dimension array
+	if (action==1) {
+		~mapping_matrix.at(feature,control).start;
+	} {
+		~mapping_matrix.at(feature,control).stop;
+	};
+};
+
+// activate deactivate mapping
+~ss_onoff_map1_func = {|action,number|
 	var input, feature, param;
 	// check input
-	input = ~ss_feature_input.value(action,3);
-	feature = ~ss_set_feature.value(action);
+	input = ~ss_feature_input.value(action,number);
+	if (input>=0) {
+		feature = ~ss_mapping_set.value(action,number);
 
-	case
-	{ action == 0 } {
-		// actions on gui
-		~ss_from_in1.enabled_(\true);
-		~ss_from_file1.enabled_(\true);
-		~ss_feature_select.enabled_(\true);
-		~ss_param_select.enabled_(\true);
-		~ss_feat_min_range.enabled_(\true);
-		~ss_feat_max_range.enabled_(\true);
-		~ss_param_min_range.enabled_(\true);
-		~ss_param_max_range.enabled_(\true);
-	}
-	{ action == 1 } {
-		// actions on gui
-		~ss_from_in1.enabled_(\false);
-		~ss_from_file1.enabled_(\false);
-		~ss_feature_select.enabled_(\false);
-		~ss_param_select.enabled_(\false);
-		~ss_feat_min_range.enabled_(\false);
-		~ss_feat_max_range.enabled_(\false);
-		~ss_param_min_range.enabled_(\false);
-		~ss_param_max_range.enabled_(\false);
-	}
+		case
+		{ action == 0 } {
+			// actions on gui
+			~ss_from_in1.enabled_(\true);
+			~ss_from_file1.enabled_(\true);
+			~ss_feature_select.enabled_(\true);
+			~ss_param_select.enabled_(\true);
+			~ss_feat_min_range.enabled_(\true);
+			~ss_feat_max_range.enabled_(\true);
+			~ss_param_min_range.enabled_(\true);
+			~ss_param_max_range.enabled_(\true);
+		}
+		{ action == 1 } {
+			// actions on gui
+			~ss_from_in1.enabled_(\false);
+			~ss_from_file1.enabled_(\false);
+			~ss_feature_select.enabled_(\false);
+			~ss_param_select.enabled_(\false);
+			~ss_feat_min_range.enabled_(\false);
+			~ss_feat_max_range.enabled_(\false);
+			~ss_param_min_range.enabled_(\false);
+			~ss_param_max_range.enabled_(\false);
+		};
+
+	} {
+		~ss_onoff_map1.value_(0);
+	};
 };
 

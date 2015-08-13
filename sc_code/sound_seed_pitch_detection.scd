@@ -32,7 +32,8 @@ SynthDef(\inPitchDetectControl, {
 	Out.kr(outCbus, Gate.kr(pitch[0],if(pitch[1],pitch[0],0)))
 }).send(s);
 ////// V A R I A B L E S   F O R   P I T C H   D E T E C T I O N ///////
-~featurebus1 = Bus.control(s,1);
+~ss_extractors = Array.fill(5,0); // array for synts
+~featurebus = Array.fill(5,Bus.control(s,1)); // array for control busses
 // base freq range
 ~mapminfreq = 20;
 ~mapmaxfreq = 20000;
@@ -51,25 +52,31 @@ SynthDef(\inPitchDetectControl, {
 
 ///// P I T C H   M A P P I N G ///////
 // 0.02.wait -> fissato così per tutti i parametri in quanto questi vengono letti al massimo ogni timestep che può essere minimo 0.04
+~mapping_matrix = Array2D.new(4,5);
+//~mapping_matrix.at(0,0).start;
+//~mapping_matrix.at(0,0).stop;
+~mapping_matrix.put(0,0,~pitch2seriebasefreq);
 // map pitch 2 the fundamental of the serie
 ~pitch2seriebasefreq = Task{ loop{
-	~featurebus1.get{|val|
+	~currentbus.get{|val|
 		~bsfreq = val.linlin(20,20000,~mapminfreq,~mapmaxfreq);
 	};
 	0.02.wait;
 }};
+
 // map pitch 2 grain duration
 ~pitch2grain_dur = Task{ loop{
-	~featurebus1.get{|val|
+	~currentbus.get{|val|
 		var mval;
 		mval = val.linlin(200,800,~mapmaxdur,~mapmindur) * 1000;
 		~grain_dur = mval;
 	};
 	0.02.wait;
 }};
+
 // map pitch 2 timestep (density of granular synthesis)
 ~pitch2timestep = Task{ loop{
-	~featurebus1.get{|val|
+	~currentbus.get{|val|
 		var mval;
 		mval = val.linlin(200,800,~mapminstep,~mapmaxstep) * 1000;
 		~overlap = mval / 4;
@@ -77,18 +84,20 @@ SynthDef(\inPitchDetectControl, {
 	};
 	0.02.wait;
 }};
+
 // map pitch 2 alpha variable of the serie
 ~ptch2alpha = Task{ loop{
-	~featurebus1.get{|val|
+	~currentbus.get{|val|
 		var mval;
 		mval = val.explin(20,20000,~mapminalpha,~mapmaxalpha);
 		~alpha = mval;
 	};
 	0.02.wait
 }};
+
 // map pitch 2 beta variable of the serie
 ~pitch2beta = Task{ loop{
-	~featurebus1.get{|val|
+	~currentbus.get{|val|
 		var mval;
 		mval = val.explin(20,20000,~mapminbeta,~mapmaxbeta);
 		~beta = mval;
@@ -96,6 +105,13 @@ SynthDef(\inPitchDetectControl, {
 	0.02.wait
 }};
 
+
+
+~mapping_matrix.put(0,0,~pitch2seriebasefreq);
+~mapping_matrix.put(0,1,~pitch2grain_dur);
+~mapping_matrix.put(0,2,~pitch2timestep);
+~mapping_matrix.put(0,3,~ptch2alpha);
+~mapping_matrix.put(0,4,~pitch2beta);
 // Tasks give sp
 
 /*

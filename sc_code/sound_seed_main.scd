@@ -423,7 +423,7 @@ SynthDef("sinegrain16", {
 // draw GUI objects
 
 ~ss_basepath = "".resolveRelative;
-(~ss_basepath++"sound_seed_pitch_detection_mapping.scd").standardizePath.load; // load pitch detection
+(~ss_basepath++"sound_seed_pitch_detection.scd").standardizePath.load; // load pitch detection
 (~ss_basepath++"sound_seed_GUI.scd").standardizePath.load; // load GUI
 //(~ss_basepath++"sound_seed_GUI.scd").standardizePath.postln
 /*
