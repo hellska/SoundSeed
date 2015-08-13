@@ -34,6 +34,10 @@ SynthDef(\inPitchDetectControl, {
 ////// V A R I A B L E S   F O R   P I T C H   D E T E C T I O N ///////
 ~ss_extractors = Array.fill(5,0); // array for synts
 ~featurebus = Array.fill(5,Bus.control(s,1)); // array for control busses
+// feature range
+~featminfreq = 20;
+~featmaxfreq = 20000;
+
 // base freq range
 ~mapminfreq = 20;
 ~mapmaxfreq = 20000;
@@ -50,6 +54,27 @@ SynthDef(\inPitchDetectControl, {
 ~mapminbeta = 0;
 ~mapmaxbeta = 2;
 
+~ss_load_range = {|bound,param|
+	var min,max,out;
+	case
+	{param==0} { min = ~mapminfreq; max = ~mapmaxfreq}
+	{param==1} { min = ~mapmindur; max = ~mapmaxdur}
+	{param==2} { min = ~mapminstep; max = ~mapminstep}
+	{param==3} { min = ~mapminalpha; max = ~mapmaxalpha}
+	{param==4} { min = ~mapminbeta; max = ~mapmaxbeta};
+	if (bound==0) { out = min } { out = max };
+	out
+};
+~ss_set_range = {|bound,param,val|
+	case
+	{param==0} { if (bound==0) {~mapminfreq=val} {~mapmaxfreq=val}; }
+	{param==1} { if (bound==0) {~mapmindur=val} {~mapmaxdur=val}; }
+	{param==2} { if (bound==0) {~mapminstep=val} {~mapminstep=val}; }
+	{param==3} { if (bound==0) {~mapminalpha=val} {~mapmaxalpha=val}; }
+	{param==4} { if (bound==0) {~mapminbeta=val} {~mapmaxbeta=val}; };
+};
+
+
 ///// P I T C H   M A P P I N G ///////
 // 0.02.wait -> fissato così per tutti i parametri in quanto questi vengono letti al massimo ogni timestep che può essere minimo 0.04
 ~mapping_matrix = Array2D.new(4,5);
@@ -59,7 +84,7 @@ SynthDef(\inPitchDetectControl, {
 // map pitch 2 the fundamental of the serie
 ~pitch2seriebasefreq = Task{ loop{
 	~currentbus.get{|val|
-		~bsfreq = val.linlin(20,20000,~mapminfreq,~mapmaxfreq);
+		~bsfreq = val.linlin(~featminfreq,~featmaxfreq,~mapminfreq,~mapmaxfreq);
 	};
 	0.02.wait;
 }};
@@ -68,7 +93,8 @@ SynthDef(\inPitchDetectControl, {
 ~pitch2grain_dur = Task{ loop{
 	~currentbus.get{|val|
 		var mval;
-		mval = val.linlin(200,800,~mapmaxdur,~mapmindur) * 1000;
+//		mval = val.linlin(200,800,~mapmaxdur,~mapmindur) * 1000;
+		mval = val.linlin(~featminfreq,~featmaxfreq,~mapmaxdur,~mapmindur) * 1000;
 		~grain_dur = mval;
 	};
 	0.02.wait;
@@ -78,7 +104,8 @@ SynthDef(\inPitchDetectControl, {
 ~pitch2timestep = Task{ loop{
 	~currentbus.get{|val|
 		var mval;
-		mval = val.linlin(200,800,~mapminstep,~mapmaxstep) * 1000;
+//		mval = val.linlin(200,800,~mapminstep,~mapmaxstep) * 1000;
+		mval = val.linlin(~featminfreq,~featmaxfreq,~mapminstep,~mapmaxstep) * 1000;
 		~overlap = mval / 4;
 		~timestep = ~timestep_calc.value(mval,~overlap);
 	};
@@ -89,7 +116,7 @@ SynthDef(\inPitchDetectControl, {
 ~ptch2alpha = Task{ loop{
 	~currentbus.get{|val|
 		var mval;
-		mval = val.explin(20,20000,~mapminalpha,~mapmaxalpha);
+		mval = val.explin(~featminfreq,~featmaxfreq,~mapminalpha,~mapmaxalpha);
 		~alpha = mval;
 	};
 	0.02.wait
@@ -99,7 +126,7 @@ SynthDef(\inPitchDetectControl, {
 ~pitch2beta = Task{ loop{
 	~currentbus.get{|val|
 		var mval;
-		mval = val.explin(20,20000,~mapminbeta,~mapmaxbeta);
+		mval = val.explin(~featminfreq,~featmaxfreq,~mapminbeta,~mapmaxbeta);
 		~beta = mval;
 	};
 	0.02.wait

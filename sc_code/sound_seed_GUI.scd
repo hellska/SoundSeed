@@ -302,13 +302,23 @@
 	.font_(Font("Courier",16))
 	.action_{|me| ~ss_param_select.items[me.value].postln /* start the capture func */};
 	~ss_feat_min_range = NumberBox(~ss_mapping_panel_gui,Rect(130,105,70,20)).value_(0)
-	.decimals_(3).clipLo_(0).clipHi_(0);
+	.decimals_(3).clipLo_(~featminfreq).clipHi_(~featmaxfreq).value_(~featminfreq)
+	.action_{|me| ~featminfreq = me.value };
 	~ss_feat_max_range = NumberBox(~ss_mapping_panel_gui,Rect(210,105,70,20)).value_(20000)
-	.decimals_(3).clipLo_(0).clipHi_(0);
+	.decimals_(3).clipLo_(~featminfreq).clipHi_(~featmaxfreq).value_(~featmaxfreq)
+	.action_{|me| ~featmaxfreq = me.value };
 	~ss_param_min_range = NumberBox(~ss_mapping_panel_gui,Rect(310,105,70,20))
-	.decimals_(3).clipLo_(0).clipHi_(0);
+	.decimals_(3)
+	.clipLo_(~ss_load_range.value(0,0))
+	.clipHi_(~ss_load_range.value(1,0))
+	.value_(~ss_load_range.value(0,0))
+	.action_{|me| ~ss_set_range.value(0,0,me.value)};
 	~ss_param_max_range = NumberBox(~ss_mapping_panel_gui,Rect(390,105,70,20))
-	.decimals_(3).clipLo_(0).clipHi_(0);
+	.decimals_(3)
+	.clipLo_(~ss_load_range.value(0,0))
+	.clipHi_(~ss_load_range.value(1,0))
+	.value_(~ss_load_range.value(1,0))
+	.action_{|me| ~ss_set_range.value(1,0,me.value)};
 	// mapping single control set END
 };
 ////////// GUI END ///////////
@@ -340,13 +350,15 @@
 				return = 2;
 			} { // accendo
 				// controllo il buffer
-				if (~ss_filebuf.numFrames!=nil) {
-					~ss_extractors.put(numer,
-						Synth(\filePitchDetectControl,
-							[\buffer, ~ss_filebuf,
-								\outCbus, ~featurebus[numer]]
+				if (~ss_filebuf.class.asString=="Buffer") {
+//					if (~ss_filebuf.numFrames!="nil")  {
+						~ss_extractors.put(numer,
+							Synth(\filePitchDetectControl,
+								[\buffer, ~ss_filebuf,
+									\outCbus, ~featurebus[numer]]
+							);
 						);
-					);
+//					};
 					~currentbus = ~featurebus[numer];
 					"ON input from file!".postln;
 					return = 2;
@@ -376,6 +388,7 @@
 	};
 	return
 };
+
 // check the feature selected
 ~ss_mapping_set = {|action,number|
 	var feature,control;
@@ -405,10 +418,10 @@
 			~ss_from_file1.enabled_(\true);
 			~ss_feature_select.enabled_(\true);
 			~ss_param_select.enabled_(\true);
-			~ss_feat_min_range.enabled_(\true);
-			~ss_feat_max_range.enabled_(\true);
-			~ss_param_min_range.enabled_(\true);
-			~ss_param_max_range.enabled_(\true);
+//			~ss_feat_min_range.enabled_(\true);
+//			~ss_feat_max_range.enabled_(\true);
+//			~ss_param_min_range.enabled_(\true);
+//			~ss_param_max_range.enabled_(\true);
 		}
 		{ action == 1 } {
 			// actions on gui
@@ -416,10 +429,10 @@
 			~ss_from_file1.enabled_(\false);
 			~ss_feature_select.enabled_(\false);
 			~ss_param_select.enabled_(\false);
-			~ss_feat_min_range.enabled_(\false);
-			~ss_feat_max_range.enabled_(\false);
-			~ss_param_min_range.enabled_(\false);
-			~ss_param_max_range.enabled_(\false);
+//			~ss_feat_min_range.enabled_(\false);
+//			~ss_feat_max_range.enabled_(\false);
+//			~ss_param_min_range.enabled_(\false);
+//			~ss_param_max_range.enabled_(\false);
 		};
 
 	} {
