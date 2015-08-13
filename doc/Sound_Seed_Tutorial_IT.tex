@@ -1,0 +1,226 @@
+\documentclass[12pt, oneside]{article}
+
+% imported packages
+\usepackage[T1]{fontenc}
+\usepackage{geometry}      
+\geometry{a4paper} 
+%\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}
+\usepackage[export]{adjustbox}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{soul,color}
+\usepackage{ textgreek }
+\usepackage{subcaption}
+
+% titolo
+\title{Sound Seed Tutorial}
+\author{Daniele Scarano}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\abstract
+Sound Seed è il nome di un software che lega insieme la sintesi granulare, gli automi cellulari e le tecniche di feature extraction tipiche del music information retrieval (MIR). Lo scopo del progetto è quello di sviluppare uno strumento musicale standalone in cui un automa cellulare viene utilizzato per controllare lo sviluppo temporale della sintesi granulare e la generazione dello spettro dei singoli grani. Il seme che da il nome al progetto è così definito perché il suono sintetizzato conserva in parte i suoi elementi costitutivi, nella pratica si tratta di un suono in input, un file audio oppure un ingresso audio. Il collegamento tra seme e suono sintetizzato avviene tramite il mapping dei parametri della sintesi con le features estratte dal seme. L'interazione tra l'utente ed il software avviene tramite un'interfaccia grafica. In questo documento sono contenute una breve descrizione del software e le istruzioni per l'utilizzo dell'interfaccia.
+\begin{figure}[h]
+   \centering
+   \includegraphics[keepaspectratio,max size={\textwidth}{\textheight}]{pictures/ss_main_view}
+   \caption{Sound Seed main view}
+   \label{fig:ss_main_view}
+\end{figure}
+
+\newpage
+\section{Prerequisiti}
+Per l'utilizzo di Sound Seed è necessario avere un computer con installato SuperCollider, la versione su cui è stato sviluppato il software è la 3.6.6. Per informazioni più dettagliate riguardo all'installazione ed all'utilizzo di SuperCollider fare riferimento al sito ufficiale
+\begin{center}
+\url{http://supercollider.github.io}
+\end{center}
+Una volta installato è necessario aggiungere un Quark, si tratta del nome dato alle librerie esterne sviluppate nel linguaggio SC. La libreria utilizzata si chiama \href{https://github.com/supercollider-quarks/downloaded-quarks/tree/master/ixiViews}{ixiView} ed è disponibile sul repository ufficiale dei Quarks, per l'installazione seguire la documentazione 
+\begin{center}
+\url{https://github.com/supercollider-quarks/quarks}
+\end{center}
+Attualmente l'installazione dei Quarks per la versione 3.6 non funziona quindi fare riferimento alla voce "Offline Usage" della documentazione.
+
+\section{Introduzione}
+Prima di entrare nello specifico della GUI di SoundSeed è necessario introdurre alcuni concetti alla base del sintetizzatore in modo che l'utente comprenda al volo di cosa si parla quando ci si riferisce a concetti come \emph{configurazione} o \emph{serie}. Uno dei concetti fondamentali alla base di SoundSeed è quello di automa cellulare:
+\\\\
+\emph{Un automa cellulare (dall'inglese Cellular automaton o Cellular automata, abbrev. CA) è un modello matematico usato per descrivere l'evoluzione di sistemi complessi discreti, studiati in teoria della computazione, matematica, fisica e biologia}\cite{wikica}.
+\\\\
+Un automa cellulare è sostanzialmente una griglia i cui elementi costitutivi sono le celle della griglia, queste celle possono trovarsi in \emph{n} stati, dove \emph{n} \textgreater\ 1. Si presenta con una configurazione iniziale che è l'insieme degli stati di ogni singola cella. Il tipo di automa cellulare definisce le regole di interazione tra le celle e determina lo sviluppo nel tempo della griglia. Una trattazione dettagliata degli automi cellulari è al di fuori dello scopo di questo documento, vediamo piuttosto come questo concetto è stato utilizzato nell'implementazione di SoundSeed. 
+
+La griglia che rappresenta graficamente l'automa cellulare è utilizzata come sequencer in cui ogni colonna è uno step quindi l'automa cellulare determina come evolve il pattern nel tempo. Ogni riga rappresenta una componente della sintesi additiva utilizzata per generare i grani quindi l'automa controlla anche la generazione dello spettro dei singoli grani.
+\begin{figure}[h]
+	\centering
+	\includegraphics[scale=0.6]{pictures/ss_grid}
+	\caption{Griglia sequencer}
+	\label{fig:ss_grid}
+\end{figure}
+
+Qui riteniamo necessaria una piccola digressione per spiegare come avviene la sintesi granulare in SoundSeed. Una volta collegata ogni colonna con uno step del sequencer, quindi l'asse \emph{x} con il tempo, e collegata ogni riga con una frequenza di una serie utilizzata per la sintesi additiva, quindi l'asse \emph{y} con lo spettro di ciascun grano spieghiamo qual'è la connessione tra le celle dell'automa e la sintesi. Lo stato delle celle di una colonna determina se quella specifica frequenza verrà utilizzata nella sintesi additiva oppure no. Nell'implementazione attuale che prevede due stati delle celle, attive o inattive, la cella attiva genera la componente alla frequenza specificata dalla serie e viene poi sommata alle altre componenti vive della colonna, la cella inattiva viene ignorata. Ogni step prevede quindi la lettura di un intera colonna e la generazione di un grano.
+
+\section{Guida all'uso di SoundSeed}
+Per iniziare a suonare con SoundSeed bisogna prima di tutto caricare il file sound\_seed.scd in SuperCollider ed utilizzare la finzione \emph{Evaluate File} dal menu \emph{Language}, se tutto è configurato correttamente si aprirà la GUI di SoundSeed che appare come nell'immagine \ref{fig:ss_main_view}. Il sintetizzatore è pronto a suonare, basta premere il tasto \emph{\textgreater} play per ascoltare la configurazione di default. Verificato che tutto funzioni corretamente l'utente può iniziare ad interagire con lo strumento.
+\subsection{Elenco dei Controlli della GUI}
+Cominciamo col presentare l'elenco completo dei controlli implementati nel pannello di controllo di SoundSeed rappresentato in figura \ref{fig:ss_controls}
+\begin{figure}[h]
+	\centering
+	\includegraphics[scale=0.6]{pictures/ss_controls}
+	\caption{Pannello di controllo di SoundSeed}
+	\label{fig:ss_controls}
+\end{figure}
+\begingroup
+\fontsize{8pt}{10pt}\selectfont
+	\begin{itemize}
+		\item Tasto \emph{\textgreater}: Avvia il processo di sintesi
+		\item Tasto \emph{mode} (single|cycle): Seleziona la modalità di configurazione singola o continua
+		\item Number Box \emph{cycle}: Definisce il numero di cicli in modalità continua
+		\item Number Box \emph{loop}: Indica il numero di cicli effettuati in modalità continua
+		\item Tasto \emph{forma d'onda}(Disabilitato): Indica la forma d'onda utilizzata per i grani
+		\item Tasto \emph{Serie}: Definisce il tipo di serie utilizzata per il calcolo delle armoniche
+		\item Number Box \emph{frequenza}: Definisce la frequenza fondamentale della serie
+		\item Number Box \emph{grain}: Definisce la lunghezza di un grano
+		\item Tasto \emph{\textless \textgreater}: Blocca il tempo di lettura del sequencer
+		\item Number Box \emph{overlap}: Definisce la durata della sovrapposizione tra i grani
+		\item Number Box \emph{rnd}: Definisce la componente randomica della densità
+		\item Knob \emph{\textalpha}: Definisca il valore della variabile \textalpha\ nella generazione della 	serie
+		\item Knob \emph{\textbeta}: Definisce il valore di \textbeta\ nella generazione della serie
+		\item Viewer \emph{time dT e c}: Visualizza il tempo di ogni step e la durata dell'intero pattern
+		\item Viewer \emph{\textalpha\ \textbeta}: Visualizza il valore delle variabili \textalpha\ e \textbeta
+		\item Tasto \emph{GoL}: Imposta Game of Life come automa cellulare per il controllo della griglia
+		\item Tasto \emph{Wolf}: Imposta Wolfram CA come automa cellulare per il controllo della griglia
+		\item Number Box \emph{Wolf No}: imposta la regola per lo sviluppo del Wolfram CA
+		\item Tasto \emph{Random}: Definisce una nuova configurazione nella griglia
+		\item Tasto \emph{cells}: se attivato (verde) limita il numero di celle attive generate dal tasto \emph{Random} 
+		\item Number Box \emph{cells No}: Definisce il numero|limite di celle attive nella configurazione generata
+		\item Slider \emph{Volume}: Imposta il volume generale di SoundSeed
+		\item Viewer Box \emph{Volume dB}: Visualizza il volume in dB settato tramite lo slider
+		\item Tasto \emph{clear}: Svuota la griglia e rende tutte le celle inattive
+		\item Tasto \emph{draw} (delete|trail): Definisce il comportamento del puntatore del mouse sulla griglia
+	\end{itemize}
+\endgroup
+I controlli della GUI si suddividono in tre gruppi, controlli della sintesi, controlli dell'automa cellulare e controlli della griglia/sequencer. Oltre a questi è stato definito il controllo del volume generale del sintetizzatore.
+\subsection{Sequencer e Configurazione}
+La griglia mostra la configurazione dell'automa cellulare e viene usata come sequencer. All'avvio di SoundSeed la griglia appare popolata con una configurazione casuale che cambia ad ogni riavvio. L'utente può modificare manualmente la griglia sia prima dell'avvio del processo di sintesi sia durante. Per un approccio algoritmico l'utente può avviare il sintetizzatore e lasciare che lo sviluppo del suono proceda autonomamente, mentre per un approccio performativo il controllo manuale consente un certo grado di interazione tra l'utente ed il sintetizzatore, questo tipo di controllo è stato implementato per le situazioni live e  rende SoundSeed uno strumento musicale oltre che un motore di sintesi.
+\subsubsection*{Elenco dei controlli della griglia}
+\begin{figure}[h]
+\centering
+	\begin{subfigure}{.3\textwidth}
+		\centering
+		\includegraphics[scale=0.5]{pictures/ss_config}
+		\caption{configurazione}
+		\label{fig:ss_config}
+	\end{subfigure}
+	\begin{subfigure}{.3\textwidth}
+		\centering
+		\includegraphics[scale=0.3]{pictures/ss_grid_empty}
+		\caption{griglia}
+		\label{fig:ss_grid_empty}
+	\end{subfigure}	
+	\begin{subfigure}{.3\textwidth}
+		\centering
+		\includegraphics[scale=0.5]{pictures/ss_draw}
+		\caption{disegno}
+		\label{fig:ss_draw}
+	\end{subfigure}
+\end{figure}
+%elenco controlli ed immagine
+\begin{enumerate}
+	\item Tasto \emph{Random} (figura \ref{fig:ss_config})
+	\item Tasto \emph{cells} (figura \ref{fig:ss_config})
+	\item Number Box \emph{cells} (figura \ref{fig:ss_config})
+	\item Grid Box \emph{griglia} (figura \ref{fig:ss_grid_empty})
+	\item Grid Box \emph{step viewer} (figura \ref{fig:ss_grid_empty})
+	\item Tasto \emph{clear} (figura \ref{fig:ss_draw})
+	\item Tasto \emph{draw}(delete|trail) (figura \ref{fig:ss_draw})
+\end{enumerate}
+La Grid box \emph{griglia} è il sequencer in cui l'asse \emph{x} rappresente il tempo e l'asse \emph{y} lo spettro dei grani. Lo \emph{step viewer}, la Grid Box con lo sfondo bianco subito sottola \emph{griglia}, mostra lo step che viene letto mentre il sintetizzatore è in "play".
+
+\subsubsection*{Generazione della Configurazione}
+\begin{figure}[h]
+\centering
+	\begin{subfigure}{.3\textwidth}
+		\includegraphics[scale=0.4]{pictures/ss_grid}
+		\caption{Random}
+		\label{fig:ss_grid}
+	\end{subfigure}
+	\begin{subfigure}{.3\textwidth}
+		\includegraphics[scale=0.4]{pictures/ss_grid_trail}
+		\caption{Trail draw}
+		\label{fig:ss_grid}
+	\end{subfigure}
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[scale=0.3]{pictures/ss_random_cells}
+		\caption{10 cells Random}
+		\label{fig:ss_random_cells}
+	\end{subfigure}
+\end{figure}
+Utilizzando il tasto \emph{Random} viene generata una configurazione casuale (Figura \ref{fig:ss_grid}) nella griglia cancellando quella precedente.
+
+Abilitando il tasto \emph{cells}, che diventa di colore verde come si vede in figura \ref{fig:ss_random_cells}, e premendo il tasto \emph{Random} vengono generate tante celle attive quante definite nel number box \emph{Cell No} adiacente al tasto.
+
+Oltre all'utilizzo della generazione casuale è possibile disegnare all'interno della griglia muovendo il puntatore del mouse col tasto sinistro premuto; se il tasto \emph{draw} è impostato sulla funzione "delete" verranno disattivate le celle dove passa il puntatore, se è impostato sulla funzione "trail" (Figura \ref{fig:ss_grid}) le celle verranno attivate. Per modificare lo stato di una singola cella basta posizionare il puntatore del mouse e clickare.
+
+\newpage
+\subsection{Controlli della Sintesi Granulare}
+Nella figura \ref{fig:ss_synthesis} vediamo il dettaglio dei controlli dedicati alla sintesi granulare. 
+\begin{figure}[h]
+	\centering
+	\includegraphics{pictures/ss_synthesis}
+	\caption{SoundSeed: Controllo della sintesi granulare}
+	\label{fig:ss_synthesis}
+\end{figure}
+
+La prima riga è dedicata ai controlli del sequencer e della configurazione. Presenta il tasto \emph{\textgreater} play che serve ad avviare il sequencer che controlla il processo di sintesi, il tasto \emph{mode} che condiziona la gestione della configurazione può essere nello stato "single" o "cycle", il primo una volta raggiunto un punto stazionario dell'automa cellulare continua a leggere la stessa configurazione presente nella griglia; il secondo una volta raggiunta la condizione stazionaria ripete la lettura del pattern \emph{n} volte, dove \emph{n} = \emph{cycle}, e poi genera una nuova configurazione random. Il controllo numerico \emph{cycle} definisce dopo quanti cicli di sequencer viene rigenerata la configurazione ed è utilizzato solo in caso il tasto \emph{mode} sia impostato su "cycle". L'ultimo number box \emph{loop} visualizza quanti cicli di lettura sono stati eseguiti dal sequencer, serve quindi a capire quando verrà rigenerata la configurazione random e può essere usato dall'utente per velocizzare o ritardare questo processo attraverso azioni manuali sulla griglia.
+
+La seconda riga contiene i controlli della forma d'onda (al momento disabilitato) e della serie. Come abbiamo visto il principio di funzionamento della sintesi granulare è il seguente: ogni grano viene costruito tramite una sintesi additiva, ciascuna colonna del sequencer rappresenta un grano e le celle attive generano delle sinusoidi con inviluppo sinusoidale alla frequenza definita dalla serie selezionata attraverso il tasto multifunzione \emph{armonic serie} da cui si può selezionare una della 4 serie possibili:
+\begin{enumerate}
+	\item harmonic serie
+	\item geometric serie
+	\item expanded harmonic
+	\item compressed harmonic
+\end{enumerate}
+La frequenza fondamentale della serie viene impostata nel number box \emph{frequenza} che si trova accanto al tasto \emph{serie} ("armonic serie" in fig. \ref{fig:ss_synthesis}).
+
+I due knobs che si trovano sotto al number box indicati dalle lettere \textalpha\  e \textbeta\ controllano i due parametri che sono fondamentali per il calcolo della serie specificata. Questi valori possono essere monitorati nel visore con testo verde su nero posto subito sotto ai due knobs. Per una trattazione più dettagliata della generazione della serie e del significato dei parametri \textalpha\  e \textbeta\ fare riferimento al paper \emph{Generalized Series for Spectral Design}\cite{cellaserie}.
+
+La terza riga contiene i controlli temporali della sintesi granulare, i tre number box \emph{grain}, \emph{overlap}\ ed \emph{rnd} sono espressi in secondi e gestiscono rispettivamente la lunghezza dei grani, l'overlap dei grani e la componente randomica della densità. Tra le prime due number box \emph{grain} e \emph{overlap} c'è il tasto \emph{\textless \textgreater} che lega le due number box in modo da non cambiare la velocità di lettura del sequencer, in questo modo sulla velocità di lettura degli steps interviene solo la componente randomica \emph{rnd}. Quest'ultima definisce il ritardo massimo di lettura del sequencer calcolato in maniera random per ogni singolo step. Si è notato che impostando \emph{rnd} su valori compresi tra 50 e 150 millisecondi i pattern ritmici risultano più naturali e meno meccanici all'ascolto. Appena sotto ai primi due number box c'è un visore a caratteri verde su nero che visualizza le durate di ogni step \emph{dT} e di tutto il pattern \emph{c} calcolate in base ai valori di \emph{grain} ed \emph{overlap}.
+
+\subsection{Controlli dell'Automa Cellulare}
+Questa sezione i presenta 3 controlli visibili in figura \ref{fig:ss_ca}.
+\begin{figure}[h]
+	\centering
+	\includegraphics[scale=0.8]{pictures/ss_ca}
+	\caption{SoundSeed: Controlli dell'automa cellulare}
+	\label{fig:ss_ca}
+\end{figure}
+
+\begin{enumerate}
+	\item tasto \emph{GoL}
+	\item tasto \emph{Wolf}
+	\item number box \emph{Wolf No}
+\end{enumerate}
+
+I tasti \emph{GoL} e \emph{Wolf} attivano rispettivamente l'automa cellulare Conway's game of Life e Wolfram CA. Questi hanno il compito di ridefinire la griglia del sequencer ogni volta che termina la lettura del pattern. Nel caso si selezioni Wolfram è necessario definire quale regola di sviluppo dell'automa utilizzare nella Number Box \emph{Wolf No} accanto al tasto. I valori accettati vanno da 0 a 255, di default viene utilizzata la regola 30\cite{wolf30}.
+
+\subsubsection*{Conway's Game of Life}
+Conway's Game of Life\cite{wikilife} conosciuto anche come Life è un automa cellulare bidimensionale a due stati. Life tende a semplificare sempre di più la configurazione nella griglia, il numero di generazioni prima del raggiungimento di una configurazione stazionaria o oscillatoria (2 o 3 stati) varia a seconda della configurazione iniziale. Dopo una prima osservazione del comportamento dell'automa cellulare per un esito musicalmente interessante è consigliabile utilizzare una configurazione random senza limiti di celle, o disegnare dei cluster di celle con il mouse. 
+
+\subsubsection*{Wolfram CA}
+Wolfram CA è un automa cellulare mono dimensionale quindi la generazione avviene riga per riga partendo dall'alto. Intuitivamente si capisce che l'automa cellulare si comporta al contrario rispetto a Life in quanto partendo da una configurazione semplice composta da poche celle tende in linea di massima a generare una configurazione più complessa.
+
+\newpage
+\begin{thebibliography}{10}
+% docs
+\bibitem{cellaserie} Carmine Emanuele Cella, \emph{Generalized Series for Spectral Design}, 18 Sep. 2013.
+
+% web sites
+\bibitem{wikica} Wikipedia, l'enciclopedia libera, \url{https://it.wikipedia.org/wiki/Automa_cellulare}, 29 Apr 2015.
+\bibitem{wikilife} Wikipedia, l'enciclopedia libera, \url{https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life}, 25 Jul 2015.
+\bibitem{wolf30} Wolfram MathWorld, \url{http://mathworld.wolfram.com/Rule30.html}, 1999-2015 Wolfram research, Inc.
+\bibitem{wolfweb} Wolfram MathWorld, \url{http://mathworld.wolfram.com/ElementaryCellularAutomaton.html}, 1999-2015 Wolfram research, Inc.
+\end{thebibliography}
+
+\end{document}

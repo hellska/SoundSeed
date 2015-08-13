@@ -1,0 +1,62 @@
+\documentclass[11pt,oneside]{article}
+\usepackage{geometry}
+\geometry{a4paper}
+
+\title{Sound Seed mapping}
+\author{Daniele Scarano}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Introduction to soundSeed Mapping Feature}
+This section describes the way mapping is implemented in SoundSeed synth. The type of automatic control of the synth is implemented as a mapping between the seed features and some granular synthesis parameters. We will refer to the whole mechanism as \emph{the mapping interface}, the part of the software that contains the mapping logic, the feature extraction functions and the user interface to control those functionalities. Each parameter can be mapped only once to avoid conflicts and noise in the effective values attributed to it. Each feature can be used to map every parameter available in the mapping interface. Parameters and features uses values range to define respectively the setting and the extraction, the user can modify those ranges, even if some constraints, as the minimum and the maximum value, are fixed. The user can extract features from audio files or sound input at the same time.
+
+Complete list of synthesis parameter available in the mapping interface:
+\begin{itemize}
+    \item Fundamental frequency of the serie
+    \item Grain length
+    \item Density of the granular synthesis (sequencer timing)
+    \item Alpha variable of the serie
+    \item Beta variable of the serie
+    \item (TO DO) Partials amplitude
+\end{itemize}
+
+Complete list of pitch mapping types:
+\begin{enumerate}
+    \item Determines the fundamental frequency of the serie
+    \item Determines the grain length
+    \item Determines the density of the granular synthesis
+    \item Determines the alpha variable of the serie
+    \item Determines the beta variable of the serie
+\end{enumerate}
+
+\section{Mapping GUI description}
+This section describes the GUI implementation to control the mapping interface. The GUI is implemented in the SuperCollider language.
+\begin{verbatim}
+					[drag and drop file]
+
+Param 1 [on/off] [s] [f] [feature select] [parameter select]
+				  [value range]   [value range]
+Param 2 [on/off] [s] [f] [feature select] [parameter select]
+				  [value range]   [value range]
+Param 3 [on/off] [s] [f] [feature select] [parameter select]
+				  [value range]   [value range]
+Param 4 [on/off] [s] [f] [feature select] [parameter select]
+				  [value range]   [value range]
+Param 5 [on/off] [s] [f] [feature select] [parameter select]
+				  [value range]   [value range]
+\end{verbatim}
+
+\begin{itemize}
+    \item [drag and drop file]: panel that load an audio file dragged into a buffer
+    \item [on/off]: activate the correspondent mapping
+    \item [s]: select sound input
+    \item [f]: select audio file
+    \item [feature select]: select the feature to extract
+    \item [value range]: set feature value range (EX: default frequency range is 20-20000)
+    \item [parameter select]: select the parameter to be mapped
+    \item [value range]: set the parameter value range
+\end{itemize}
+
+\end{document}
