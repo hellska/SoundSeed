@@ -34,42 +34,52 @@ SynthDef(\inPitchDetectControl, {
 ////// V A R I A B L E S   F O R   P I T C H   D E T E C T I O N ///////
 ~ss_extractors = Array.fill(5,0); // array for synts
 ~featurebus = Array.fill(5,Bus.control(s,1)); // array for control busses
-// feature range
-~featminfreq = 20;
-~featmaxfreq = 20000;
+// feature pitch range
+~featminfreq = ~featminfreqdef = 20;
+~featmaxfreq = ~featmaxfreqdef = 20000;
+
 
 // base freq range
-~mapminfreq = 20;
-~mapmaxfreq = 20000;
+~mapminfreq = ~mapminfreqdef = 20;
+~mapmaxfreq = ~mapmaxfreqdef = 20000;
 // grain dur range
-~mapmindur = 0.04;
-~mapmaxdur = 1.01;
+~mapmindur = ~mapmindurdef = 0.04;
+~mapmaxdur = ~mapmaxdurdef = 1.01;
 // density range
-~mapminstep = 0.04;
-~mapmaxstep = 20.0;
+~mapminstep = ~mapminstepdef = 0.04;
+~mapmaxstep = ~mapmaxstepdef = 1.01;
 // alpha range
-~mapminalpha = 0;
-~mapmaxalpha = 2;
+~mapminalpha = ~mapminalphadef = 0;
+~mapmaxalpha = ~mapmaxalphadef = 2;
 // beta range
-~mapminbeta = 0;
-~mapmaxbeta = 2;
+~mapminbeta = ~mapminbetadef = 0;
+~mapmaxbeta = ~mapmaxbetadef = 2;
 
+// set the correct range for each param
 ~ss_load_range = {|bound,param|
 	var min,max,out;
 	case
-	{param==0} { min = ~mapminfreq; max = ~mapmaxfreq}
-	{param==1} { min = ~mapmindur; max = ~mapmaxdur}
-	{param==2} { min = ~mapminstep; max = ~mapminstep}
-	{param==3} { min = ~mapminalpha; max = ~mapmaxalpha}
-	{param==4} { min = ~mapminbeta; max = ~mapmaxbeta};
+	// parameters
+	{param==0} { min = ~mapminfreqdef; max = ~mapmaxfreqdef}
+	{param==1} { min = ~mapmindurdef; max = ~mapmaxdurdef}
+	{param==2} { min = ~mapminstepdef; max = ~mapmaxstepdef}
+	{param==3} { min = ~mapminalphadef; max = ~mapmaxalphadef}
+	{param==4} { min = ~mapminbetadef; max = ~mapmaxbetadef}
+	// features
+	{param==5} {min = ~featminfreqdef; max = ~featmaxfreqdef}
+	{param==6} {min = ~featminfreqdef; max = ~featmaxfreqdef} // centroid is in Hertz
+	{param==7} {min = 1; max = 1}
+	{param==8} {min = 1; max = 1};
 	if (bound==0) { out = min } { out = max };
 	out
 };
+// set the variable by the number box
 ~ss_set_range = {|bound,param,val|
+
 	case
 	{param==0} { if (bound==0) {~mapminfreq=val} {~mapmaxfreq=val}; }
 	{param==1} { if (bound==0) {~mapmindur=val} {~mapmaxdur=val}; }
-	{param==2} { if (bound==0) {~mapminstep=val} {~mapminstep=val}; }
+	{param==2} { if (bound==0) {~mapminstep=val} {~mapmaxstep=val}; }
 	{param==3} { if (bound==0) {~mapminalpha=val} {~mapmaxalpha=val}; }
 	{param==4} { if (bound==0) {~mapminbeta=val} {~mapmaxbeta=val}; };
 };
@@ -77,68 +87,62 @@ SynthDef(\inPitchDetectControl, {
 
 ///// P I T C H   M A P P I N G ///////
 // 0.02.wait -> fissato così per tutti i parametri in quanto questi vengono letti al massimo ogni timestep che può essere minimo 0.04
-~mapping_matrix = Array2D.new(4,5);
-//~mapping_matrix.at(0,0).start;
-//~mapping_matrix.at(0,0).stop;
-~mapping_matrix.put(0,0,~pitch2seriebasefreq);
+~mapping_tasks_matrix = Array2D.new(4,5);
+~mapping_busses_matrix = Array2D.new(4,5);
+//~mapping_tasks_matrix.at(0,0).start;
+//~mapping_tasks_matrix.at(0,0).stop;
+
 // map pitch 2 the fundamental of the serie
 ~pitch2seriebasefreq = Task{ loop{
-	~currentbus.get{|val|
+	~mapping_busses_matrix.at(0,0).get{|val|
 		~bsfreq = val.linlin(~featminfreq,~featmaxfreq,~mapminfreq,~mapmaxfreq);
+		{ ~seriebasefreq.value_(~bsfreq) }.defer;
 	};
 	0.02.wait;
 }};
-
+~mapping_tasks_matrix.put(0,0,~pitch2seriebasefreq);
 // map pitch 2 grain duration
 ~pitch2grain_dur = Task{ loop{
-	~currentbus.get{|val|
+	~mapping_busses_matrix.at(0,1).get{|val|
 		var mval;
 //		mval = val.linlin(200,800,~mapmaxdur,~mapmindur) * 1000;
-		mval = val.linlin(~featminfreq,~featmaxfreq,~mapmaxdur,~mapmindur) * 1000;
+		mval = val.linlin(~featminfreq,~featmaxfreq,~mapmindur,~mapmaxdur) * 1000;
 		~grain_dur = mval;
+		{ ~grain_dur_number.value_(~grain_dur/1000) }.defer;
 	};
 	0.02.wait;
 }};
-
+~mapping_tasks_matrix.put(0,1,~pitch2grain_dur);
 // map pitch 2 timestep (density of granular synthesis)
 ~pitch2timestep = Task{ loop{
-	~currentbus.get{|val|
+	~mapping_busses_matrix.at(0,2).get{|val|
 		var mval;
-//		mval = val.linlin(200,800,~mapminstep,~mapmaxstep) * 1000;
-		mval = val.linlin(~featminfreq,~featmaxfreq,~mapminstep,~mapmaxstep) * 1000;
-		~overlap = mval / 4;
-		~timestep = ~timestep_calc.value(mval,~overlap);
+		mval = val.linlin(~featminfreq,~featmaxfreq,~mapminstep,~mapmaxstep);
+		~timestep = mval;
 	};
 	0.02.wait;
 }};
-
+~mapping_tasks_matrix.put(0,2,~pitch2timestep);
 // map pitch 2 alpha variable of the serie
 ~ptch2alpha = Task{ loop{
-	~currentbus.get{|val|
+	~mapping_busses_matrix.at(0,3).get{|val|
 		var mval;
 		mval = val.explin(~featminfreq,~featmaxfreq,~mapminalpha,~mapmaxalpha);
 		~alpha = mval;
 	};
 	0.02.wait
 }};
-
+~mapping_tasks_matrix.put(0,3,~ptch2alpha);
 // map pitch 2 beta variable of the serie
 ~pitch2beta = Task{ loop{
-	~currentbus.get{|val|
+	~mapping_busses_matrix.at(0,4).get{|val|
 		var mval;
 		mval = val.explin(~featminfreq,~featmaxfreq,~mapminbeta,~mapmaxbeta);
 		~beta = mval;
 	};
 	0.02.wait
 }};
-
-
-
-~mapping_matrix.put(0,0,~pitch2seriebasefreq);
-~mapping_matrix.put(0,1,~pitch2grain_dur);
-~mapping_matrix.put(0,2,~pitch2timestep);
-~mapping_matrix.put(0,3,~ptch2alpha);
-~mapping_matrix.put(0,4,~pitch2beta);
+~mapping_tasks_matrix.put(0,4,~pitch2beta);
 // Tasks give sp
 
 /*

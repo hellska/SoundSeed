@@ -296,11 +296,30 @@
 	~ss_feature_select = ListView(~ss_mapping_panel_gui,Rect(130,80,150,20))
 	.items_(["pitch","centroid","spread","energy"])
 	.font_(Font("Courier",16))
-	.action_{|me| ~ss_feature_select.items[me.value].postln /* start the capture func */};
+	.action_{|me|
+		var min, max, offset;
+		offset = 5; // this is the number of parameters ranges present
+		min = ~ss_load_range.value(0,me.value+5);
+		max = ~ss_load_range.value(1,me.value+5);
+//		~ss_param_select.items[me.value].postln;
+		~ss_feat_min_range.clipLo_(min).clipHi_(max).value_(min);
+		~ss_feat_max_range.clipLo_(min).clipHi_(max).value_(max);
+
+	};
 	~ss_param_select = ListView(~ss_mapping_panel_gui,Rect(310,80,280,20))
 	.items_(["Fundamental frequency","Grain length","Density","Serie Alpha", "Serie Beta"])
 	.font_(Font("Courier",16))
-	.action_{|me| ~ss_param_select.items[me.value].postln /* start the capture func */};
+	.action_{|me|
+		var min, max;
+		min = ~ss_load_range.value(0,me.value);
+		max = ~ss_load_range.value(1,me.value);
+//		~ss_param_select.items[me.value].postln;
+		~ss_param_min_range.clipLo_(min).clipHi_(max).value_(min);
+		~ss_param_max_range.clipLo_(min).clipHi_(max).value_(max);
+		~ss_set_range.value(0,me.value,~ss_param_min_range.value);
+		~ss_set_range.value(1,me.value,~ss_param_max_range.value);
+	};
+
 	~ss_feat_min_range = NumberBox(~ss_mapping_panel_gui,Rect(130,105,70,20)).value_(0)
 	.decimals_(3).clipLo_(~featminfreq).clipHi_(~featmaxfreq).value_(~featminfreq)
 	.action_{|me| ~featminfreq = me.value };
@@ -312,13 +331,13 @@
 	.clipLo_(~ss_load_range.value(0,0))
 	.clipHi_(~ss_load_range.value(1,0))
 	.value_(~ss_load_range.value(0,0))
-	.action_{|me| ~ss_set_range.value(0,0,me.value)};
+	.action_{|me| ~ss_set_range.value(0,~ss_param_select.value,me.value)};
 	~ss_param_max_range = NumberBox(~ss_mapping_panel_gui,Rect(390,105,70,20))
 	.decimals_(3)
 	.clipLo_(~ss_load_range.value(0,0))
 	.clipHi_(~ss_load_range.value(1,0))
 	.value_(~ss_load_range.value(1,0))
-	.action_{|me| ~ss_set_range.value(1,0,me.value)};
+	.action_{|me| ~ss_set_range.value(1,~ss_param_select.value,me.value)};
 	// mapping single control set END
 };
 ////////// GUI END ///////////
@@ -336,9 +355,11 @@
 // check the input of the feature
 ~ss_feature_input = {|action,numer|
 	// the function returns -1 if nothing selected, 1 for soundin, 2 for file input
-	var return, who;
-	who = "~ss_extractor"+numer.asSymbol;
+	var return, who, feature, control;
 	return = -255;
+	who = "~ss_extractor"+numer.asSymbol;
+	feature = ~ss_feature_select.value;
+	control = ~ss_param_select.value;
 	if (~ss_from_in1.value==0) {
 		if (~ss_from_file1.value==0) {
 			"both file and soundin off - there's some error check implementation".postln;
@@ -351,15 +372,16 @@
 			} { // accendo
 				// controllo il buffer
 				if (~ss_filebuf.class.asString=="Buffer") {
-//					if (~ss_filebuf.numFrames!="nil")  {
-						~ss_extractors.put(numer,
-							Synth(\filePitchDetectControl,
-								[\buffer, ~ss_filebuf,
-									\outCbus, ~featurebus[numer]]
-							);
+					//					if (~ss_filebuf.numFrames!="nil")  {
+					~ss_extractors.put(numer,
+						Synth(\filePitchDetectControl,
+							[\buffer, ~ss_filebuf,
+								\outCbus, ~featurebus[numer]]
 						);
-//					};
+					);
+					//					};
 					~currentbus = ~featurebus[numer];
+					~mapping_busses_matrix.put(feature,control,~featurebus[numer]);
 					"ON input from file!".postln;
 					return = 2;
 				} {
@@ -382,6 +404,7 @@
 				);
 			);
 			~currentbus = ~featurebus[numer];
+			~mapping_busses_matrix.put(feature,control,~featurebus[numer]);
 		};
 		"input from Soundin!".postln;
 		return = 1;
@@ -397,9 +420,9 @@
 	("Feat:"+feature+"Control:"+control).postln;
 	// retrieve the function from the two dimension array
 	if (action==1) {
-		~mapping_matrix.at(feature,control).start;
+		~mapping_tasks_matrix.at(feature,control).start;
 	} {
-		~mapping_matrix.at(feature,control).stop;
+		~mapping_tasks_matrix.at(feature,control).stop;
 	};
 };
 
