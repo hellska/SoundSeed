@@ -372,14 +372,14 @@
 			} { // accendo
 				// controllo il buffer
 				if (~ss_filebuf.class.asString=="Buffer") {
-					//					if (~ss_filebuf.numFrames!="nil")  {
+					// check the feature here
 					~ss_extractors.put(numer,
 						Synth(\filePitchDetectControl,
 							[\buffer, ~ss_filebuf,
 								\outCbus, ~featurebus[numer]]
 						);
 					);
-					//					};
+					// end check feature
 					~currentbus = ~featurebus[numer];
 					~mapping_busses_matrix.put(feature,control,~featurebus[numer]);
 					"ON input from file!".postln;
@@ -412,7 +412,7 @@
 	return
 };
 
-// check the feature selected
+// check the feature selected and start the task
 ~ss_mapping_set = {|action,number|
 	var feature,control;
 	feature = ~ss_feature_select.value;
@@ -429,9 +429,10 @@
 // activate deactivate mapping
 ~ss_onoff_map1_func = {|action,number|
 	var input, feature, param;
-	// check input
+	// check and set input
 	input = ~ss_feature_input.value(action,number);
 	if (input>=0) {
+		// check and set output and mapping
 		feature = ~ss_mapping_set.value(action,number);
 
 		case
@@ -441,10 +442,7 @@
 			~ss_from_file1.enabled_(\true);
 			~ss_feature_select.enabled_(\true);
 			~ss_param_select.enabled_(\true);
-//			~ss_feat_min_range.enabled_(\true);
-//			~ss_feat_max_range.enabled_(\true);
-//			~ss_param_min_range.enabled_(\true);
-//			~ss_param_max_range.enabled_(\true);
+
 		}
 		{ action == 1 } {
 			// actions on gui
@@ -452,10 +450,7 @@
 			~ss_from_file1.enabled_(\false);
 			~ss_feature_select.enabled_(\false);
 			~ss_param_select.enabled_(\false);
-//			~ss_feat_min_range.enabled_(\false);
-//			~ss_feat_max_range.enabled_(\false);
-//			~ss_param_min_range.enabled_(\false);
-//			~ss_param_max_range.enabled_(\false);
+
 		};
 
 	} {

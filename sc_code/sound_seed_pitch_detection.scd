@@ -32,8 +32,6 @@ SynthDef(\inPitchDetectControl, {
 	Out.kr(outCbus, Gate.kr(pitch[0],if(pitch[1],pitch[0],0)))
 }).send(s);
 ////// V A R I A B L E S   F O R   P I T C H   D E T E C T I O N ///////
-~ss_extractors = Array.fill(5,0); // array for synts
-~featurebus = Array.fill(5,Bus.control(s,1)); // array for control busses
 // feature pitch range
 ~featminfreq = ~featminfreqdef = 20;
 ~featmaxfreq = ~featmaxfreqdef = 20000;
@@ -75,7 +73,6 @@ SynthDef(\inPitchDetectControl, {
 };
 // set the variable by the number box
 ~ss_set_range = {|bound,param,val|
-
 	case
 	{param==0} { if (bound==0) {~mapminfreq=val} {~mapmaxfreq=val}; }
 	{param==1} { if (bound==0) {~mapmindur=val} {~mapmaxdur=val}; }
