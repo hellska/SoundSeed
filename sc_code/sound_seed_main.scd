@@ -423,7 +423,7 @@ SynthDef("sinegrain16", {
 }).send(s);
 ////////////////////////
 ////
-// ~ss_extractors = Array.fill(5,0); // array for synts
+~ss_extractors = Array.fill(5,0); // array for synts
 
 //// EXTRACTOR BUSSES
 ~featurebus = Array.fill(5,Bus.control(s,1)); // array for control busses
