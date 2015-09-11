@@ -1,4 +1,9 @@
-(
+///// S P E C   C E N T R O I D ///////
+// new variables
+~ss_centroid_nu_formean = 5;
+~ss_feat_dimension = 1; // mandatory for synthdefs load
+~ss_centroid_meanbuf = Buffer.alloc(s, ~ss_centroid_nu_formean, ~ss_feat_dimension + 1);
+// synths definition
 SynthDef(\fileSpecCentroid, {|
 	buffer,
 	meanbuffer,
@@ -16,7 +21,7 @@ SynthDef(\fileSpecCentroid, {|
 	trig = chain > -0.001;
 	centroidData = [SpecCentroid.kr(chain)];
 	centroidBuf = KMeansRT.kr(meanbuffer, centroidData, centNum, trig);
-	centroid = KMeansRT.getCentroid(meanbuffer, centroidBuf, ~ss_feat_dimension).at(0);
+	centroid = KMeansRT.getCentroid(meanbuffer, centroidBuf, 1).at(0);
 	centroid.poll(10, \cent);
 	Out.ar(outbus, out * amp);
 	Out.kr(outCbus, centroid)
@@ -38,25 +43,8 @@ SynthDef(\soundinSpecCentroid, {|
 	trig = chain > -0.001;
 	centroidData = [SpecCentroid.kr(chain)];
 	centroidBuf = KMeansRT.kr(meanbuffer, centroidData, centNum, trig);
-	centroid = KMeansRT.getCentroid(meanbuffer, centroidBuf, ~ss_feat_dimension).at(0);
+	centroid = KMeansRT.getCentroid(meanbuffer, centroidBuf, 1).at(0);
 	centroid.poll(10, \cent);
 	Out.ar(outbus, out * amp);
 	Out.kr(outCbus, centroid)
 }).send(s);
-)
-
-// new variables
-~ss_centroid_nu_formean = 5;
-~ss_feat_dimension = 1;
-~ss_centroid_meanbuf = Buffer.alloc(s, ~spec_centroids, ~feat_dimension + 1);
-
-
-// for testing
-~filebuf = Buffer.read(s, "/Volumes/ssdData/soundsAndSamples/varie/sound_seed_test_flute.aiff".standardizePath);
-~outbuss = Bus.control(s, 1);
-// filein
-a = Synth.new(\fileSpecCentroid, [\buffer, ~filebuf, \meanbuffer, ~ss_centroid_meanbuf, \outCbus, ~outbuss]);
-// soundin
-a = Synth.new(\soundinSpecCentroid, [\meanbuffer, ~ss_centroid_meanbuf, \outCbus, ~outbuss]);
-// stop
-a.set(gate, 0);
