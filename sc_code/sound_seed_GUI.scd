@@ -279,8 +279,10 @@
 	~ss_onoff_map1 = Button(~ss_mapping_panel_gui,Rect(20,80,20,20))
 	.states_([["I/O"],["I/O",Color.black,Color.green]])
 	.action_{|me| case
-		{me.value==0} { /* off feature */ ~ss_onoff_map1_func.value(me.value,0) }
-		{me.value==1} { /* on feature*/ ~ss_onoff_map1_func.value(me.value,0) }; };
+//		{me.value==0} { /* off feature */ ~ss_onoff_map1_func.value(me.value,0) }
+//		{me.value==1} { /* on feature*/ ~ss_onoff_map1_func.value(me.value,0) }; };
+		{me.value==0} { /* off feature */ ~ss_onoff_map1_func.value(me.value,~ss_feature_select.value) }
+		{me.value==1} { /* on feature*/ ~ss_onoff_map1_func.value(me.value,~ss_feature_select.value) }; };
 	~ss_from_in1 = Button(~ss_mapping_panel_gui,Rect(60,80,20,20))
 	.states_([["In"],["In",Color.black,Color.green]])
 	.action_{|me| case
@@ -311,11 +313,14 @@
 	.font_(Font("Courier",16))
 	.action_{|me|
 		var min, max;
+		// load the range of specific parameter
 		min = ~ss_load_range.value(0,me.value);
 		max = ~ss_load_range.value(1,me.value);
 //		~ss_param_select.items[me.value].postln;
+		// set the number boxes values
 		~ss_param_min_range.clipLo_(min).clipHi_(max).value_(min);
 		~ss_param_max_range.clipLo_(min).clipHi_(max).value_(max);
+		// set the variables used for mapping
 		~ss_set_range.value(0,me.value,~ss_param_min_range.value);
 		~ss_set_range.value(1,me.value,~ss_param_max_range.value);
 	};
@@ -358,7 +363,7 @@
 	var return, who, feature, control;
 	return = -255;
 	who = "~ss_extractor"+numer.asSymbol;
-	feature = ~ss_feature_select.value;
+	feature = ~ss_feature_select.value; // this comes in numer variable !!! check this out
 	control = ~ss_param_select.value;
 	if (~ss_from_in1.value==0) {
 		if (~ss_from_file1.value==0) {
@@ -373,14 +378,14 @@
 				// controllo il buffer
 				if (~ss_filebuf.class.asString=="Buffer") {
 					// check the feature here
-					~ss_extractors.put(numer,
-						Synth(\filePitchDetectControl,
-							[\buffer, ~ss_filebuf,
-								\outCbus, ~featurebus[numer]]
-						);
-					);
+					case
+					{numer==0}
+					{ ~ss_extractors.put(numer,	Synth(\filePitchDetectControl,[\buffer, ~ss_filebuf,\outCbus, ~featurebus[numer]])); }
+					{numer==1}
+					{ ~ss_extractors.put(numer, Synth(\fileSpecCentroid,
+						[\buffer, ~ss_filebuf,\meanbuffer, ~ss_centroid_meanbuf,\outCbus, ~featurebus[numer]])) };
 					// end check feature
-					~currentbus = ~featurebus[numer];
+					~currentbus = ~featurebus[numer]; // obsolete
 					~mapping_busses_matrix.put(feature,control,~featurebus[numer]);
 					"ON input from file!".postln;
 					return = 2;
@@ -398,12 +403,13 @@
 			~ss_extractors[numer].set(\gate, 0);
 		} { // accendo
 			("accendo"+who).postln;
-			~ss_extractors.put(numer,
-				Synth(\inPitchDetectControl,
-					[\outCbus, ~featurebus[numer]]
-				);
-			);
-			~currentbus = ~featurebus[numer];
+			case
+			{numer==0}
+			{ ~ss_extractors.put(numer, Synth(\inPitchDetectControl, [\outCbus, ~featurebus[numer]])) }
+			{numer==1}
+			{ ~ss_extractors.put(numer, Synth(\soundinSpecCentroid, [\outCbus, ~featurebus[numer]])) };
+			// set current bus in use
+			~currentbus = ~featurebus[numer]; // obsolete
 			~mapping_busses_matrix.put(feature,control,~featurebus[numer]);
 		};
 		"input from Soundin!".postln;

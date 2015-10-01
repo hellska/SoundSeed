@@ -22,7 +22,7 @@ SynthDef(\fileSpecCentroid, {|
 	centroidData = [SpecCentroid.kr(chain)];
 	centroidBuf = KMeansRT.kr(meanbuffer, centroidData, centNum, trig);
 	centroid = KMeansRT.getCentroid(meanbuffer, centroidBuf, 1).at(0);
-	centroid.poll(10, \cent);
+//	centroid.poll(10, \cent);
 	Out.ar(outbus, out * amp);
 	Out.kr(outCbus, centroid)
 }).send(s);
@@ -44,7 +44,34 @@ SynthDef(\soundinSpecCentroid, {|
 	centroidData = [SpecCentroid.kr(chain)];
 	centroidBuf = KMeansRT.kr(meanbuffer, centroidData, centNum, trig);
 	centroid = KMeansRT.getCentroid(meanbuffer, centroidBuf, 1).at(0);
-	centroid.poll(10, \cent);
+//	centroid.poll(10, \cent);
 	Out.ar(outbus, out * amp);
 	Out.kr(outCbus, centroid)
 }).send(s);
+
+// map centroid on fundamental
+~cent2seriebasefreq = Task{ loop{
+	~mapping_busses_matrix.at(1,0).get{|val|
+		var mval;
+		mval = val.linlin(~centminfreq,~centmaxfreq,~mapminfreq,~mapmaxfreq);
+		~bsfreq = mval;
+		{ ~seriebasefreq.value_(~bsfreq) }.defer;
+	};
+	0.2.wait;
+}};
+~mapping_tasks_matrix.put(1,0,~cent2seriebasefreq);
+// map centroid on grain length
+~cent2grain_dur = Task{ loop{
+	~mapping_busses_matrix.at(1,1).get{|val|
+		var mval;
+		mval = val.linlin(~centminfreq,~centmaxfreq,~mapmindur,~mapmaxdur) * 1000;
+		~grain_dur = mval;
+		{ ~grain_dur_number.value_(~grain_dur/1000) }.defer;
+	};
+	0.02.wait;
+}};
+~mapping_tasks_matrix.put(1,1,~cent2grain_dur);
+//~mapping_tasks_matrix.put(1,1,~cent2grain_dur);
+// map centroid on density
+// map centroid on alpha
+// map centroid on beta

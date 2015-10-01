@@ -26,6 +26,8 @@
 //// feature pitch range
 ~featminfreq = ~featminfreqdef = 20; // pitch detection range
 ~featmaxfreq = ~featmaxfreqdef = 20000; // pitch detection range
+~centminfreq = ~centminfreqdef = 21; // centroid min req
+~centmaxfreq = ~centmaxfreqdef = 20001; // centroid max freq
 //// granular synthesis control ranges
 ~mapminfreq = ~mapminfreqdef = 20; // base freq range
 ~mapmaxfreq = ~mapmaxfreqdef = 20000; // base freq range
