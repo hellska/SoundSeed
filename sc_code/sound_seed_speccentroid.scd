@@ -73,5 +73,32 @@ SynthDef(\soundinSpecCentroid, {|
 ~mapping_tasks_matrix.put(1,1,~cent2grain_dur);
 //~mapping_tasks_matrix.put(1,1,~cent2grain_dur);
 // map centroid on density
+~cent2timestep = Task{ loop{
+	~mapping_busses_matrix.at(1,2).get{|val|
+		var mval;
+		mval = val.linlin(~centminfreq,~centmaxfreq,~mapminstep,~mapmaxstep);
+		~timestep = mval;
+	};
+	0.02.wait;
+}};
+~mapping_tasks_matrix.put(1,2,~cent2timestep);
 // map centroid on alpha
+~cent2alpha = Task{ loop{
+	~mapping_busses_matrix.at(1,3).get{|val|
+		var mval;
+		mval = val.explin(~centminfreq,~centmaxfreq,~mapminalpha,~mapmaxalpha);
+		~alpha = mval;
+	};
+	0.02.wait;
+}};
+~mapping_tasks_matrix.put(1,3,~cent2alpha);
 // map centroid on beta
+~cent2beta = Task{ loop{
+	~mapping_busses_matrix.at(1,4).get{|val|
+		var mval;
+		mval = val.explin(~centminfreq,~centmaxfreq,~mapminbeta,~mapmaxbeta);
+		~beta = mval;
+	};
+	0.02.wait;
+}};
+~mapping_tasks_matrix.put(1,4,~cent2beta);
