@@ -20,7 +20,7 @@ SynthDef(\inPitchDetectControl, {
 	|inbus = 0,
 	loop = 1,
 	gate = 1,
-	amp = 0.5,
+	amp = 0.0,
 	outbus = 0,
 	outCbus = 0|
 	var source, env, pitch, pitchsig, out;

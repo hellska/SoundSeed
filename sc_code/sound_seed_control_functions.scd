@@ -139,7 +139,7 @@
 	// features - function using offset determined by how many param defined above
 	{param==5} {min = ~featminfreqdef; max = ~featmaxfreqdef} // pitch in Hz
 	{param==6} {min = ~centminfreqdef; max = ~centmaxfreqdef} // centroid is in Hertz
-	{param==7} {min = 1; max = 1}
+	{param==7} {min = ~spreadminvaldef; max = ~spreadmaxvaldef} // spread in number
 	{param==8} {min = 1; max = 1};
 	if (bound==0) { out = min } { out = max };
 	out

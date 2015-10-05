@@ -31,7 +31,7 @@ SynthDef(\soundinSpecCentroid, {|
 	meanbuffer,
 	loop = 1,
 	gate = 1,
-	amp = 0.5,
+	amp = 0.0,
 	centNum = 5,
 	outbus = 0,
 	outCbus|

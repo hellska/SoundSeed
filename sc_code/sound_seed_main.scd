@@ -28,6 +28,8 @@
 ~featmaxfreq = ~featmaxfreqdef = 20000; // pitch detection range
 ~centminfreq = ~centminfreqdef = 21; // centroid min req
 ~centmaxfreq = ~centmaxfreqdef = 20001; // centroid max freq
+~spreadminval = ~spreadminvaldef = 0; // minimum value of spread rescaled by 0.000001
+~spreadmaxval = ~spreadmaxvaldef = 20; // maximum value of spread rescaled by 0.000001
 //// granular synthesis control ranges
 ~mapminfreq = ~mapminfreqdef = 20; // base freq range
 ~mapmaxfreq = ~mapmaxfreqdef = 20000; // base freq range
@@ -50,6 +52,7 @@
 (~ss_basepath++"sound_seed_control_functions.scd").standardizePath.load; // load control functions
 (~ss_basepath++"sound_seed_pitch_detection.scd").standardizePath.load; // load pitch detection
 (~ss_basepath++"sound_seed_speccentroid.scd").standardizePath.load; // load spec centroid
+(~ss_basepath++"sound_seed_spread.scd").standardizePath.load; // load spread
 //// GUI
 (~ss_basepath++"sound_seed_GUI.scd").standardizePath.load; // load GUI
 // the play button task (start sequencer and synthesis)

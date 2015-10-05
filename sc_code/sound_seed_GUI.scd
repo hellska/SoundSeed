@@ -383,7 +383,10 @@
 					{ ~ss_extractors.put(numer,	Synth(\filePitchDetectControl,[\buffer, ~ss_filebuf,\outCbus, ~featurebus[numer]])); }
 					{numer==1}
 					{ ~ss_extractors.put(numer, Synth(\fileSpecCentroid,
-						[\buffer, ~ss_filebuf,\meanbuffer, ~ss_centroid_meanbuf,\outCbus, ~featurebus[numer]])) };
+						[\buffer, ~ss_filebuf,\meanbuffer, ~ss_centroid_meanbuf,\outCbus, ~featurebus[numer]])) }
+					{numer==2}
+					{ ~ss_extractors.put(numer, Synth(\fileSpecSpread,
+						[\buffer, ~ss_filebuf,\outCbus, ~featurebus[numer]])) };
 					// end check feature
 					~currentbus = ~featurebus[numer]; // obsolete
 					~mapping_busses_matrix.put(feature,control,~featurebus[numer]);
@@ -407,7 +410,10 @@
 			{numer==0}
 			{ ~ss_extractors.put(numer, Synth(\inPitchDetectControl, [\outCbus, ~featurebus[numer]])) }
 			{numer==1}
-			{ ~ss_extractors.put(numer, Synth(\soundinSpecCentroid, [\outCbus, ~featurebus[numer]])) };
+			{ ~ss_extractors.put(numer, Synth(\soundinSpecCentroid, [\outCbus, ~featurebus[numer]])) }
+			{numer==2}
+			{ ~ss_extractors.put(numer, Synth(\soundinSpecSpread, [\outCbus, ~featurebus[numer]]));
+				"spread".postln };
 			// set current bus in use
 			~currentbus = ~featurebus[numer]; // obsolete
 			~mapping_busses_matrix.put(feature,control,~featurebus[numer]);
