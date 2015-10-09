@@ -21,7 +21,7 @@
 ~currca = "gol"; // define the current ca executed
 ~sized = 0; // Affect Random Function and define if it is sized or not
 ~currloop = 0; // cycle to count pattern loop
-~maxloops = 16; // max cycles before next random configuration
+~maxloops = 5; // max cycles before next random configuration
 ~synthez = "sinegrain"; // basename for the synth
 //// feature pitch range
 ~featminfreq = ~featminfreqdef = 20; // pitch detection range
@@ -57,7 +57,8 @@
 (~ss_basepath++"sound_seed_spread.scd").standardizePath.load; // load spread
 (~ss_basepath++"sound_seed_crest.scd").standardizePath.load; // load crest
 //// GUI
-(~ss_basepath++"sound_seed_GUI.scd").standardizePath.load; // load GUI
+// (~ss_basepath++"sound_seed_GUI_presentation.scd").standardizePath.load; // load stable GUI
+(~ss_basepath++"sound_seed_GUI_presentation.scd").standardizePath.load; // load new GUI
 // the play button task (start sequencer and synthesis)
 ~tas = Task{ loop{
 	~sequencer.value(~gridside,~timestep,~rnd); // Controls also the time

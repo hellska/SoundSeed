@@ -1,38 +1,77 @@
 // this function draws GUI objects
 ~sound_seed_GUI_creator = {
-	~soundseed_w = Window.new("Sound Seed").front.setTopLeftBounds(Rect(0, 0, 600, 350));
-	~cagrid = BoxGrid.new(~soundseed_w,bounds:Rect(20, 20, 300, 300),columns:~gridside,rows:~gridside);
-	~stepgrid = BoxGrid.new(~soundseed_w,Rect(37,322,266,16),16,1);
+	var screenx, screeny, viewx, viewy, viewxpos, viewypos;
+	screenx = 1440;
+	screeny = 900;
+	viewx = 800;
+	viewy = 800;
+	viewxpos = (screenx/2)-(viewx/2);
+	viewypos = (screeny/2)-(viewy/2);
+	~sss_master_win = Window.new("SoundSeed").front.setTopLeftBounds(Rect(0, 0, screenx, screeny));
+//	~soundseed_w = Window.new("Sound Seed").front.setTopLeftBounds(Rect(0, 0, 600, 350)); //.fullScreen;
+	~soundseed_w = CompositeView(~sss_master_win, Rect(viewxpos, viewypos, viewx, viewy));
+
+// grid controls
+	~soundSeedGridArea = CompositeView(~soundseed_w, Rect(0,0,viewx/2,viewy/2));
+	~cagrid = BoxGrid.new(~soundSeedGridArea,bounds:Rect(0, 0, 300, 300),columns:~gridside,rows:~gridside);
+	~stepgrid = BoxGrid.new(~soundSeedGridArea,Rect(17,322,266,16),16,1);
+	// grid controls --- nel frame della griglia
+	~cleargridButton = Button(~soundSeedGridArea,Rect(332,279,50,20));
+	~drawmodeButton = Button(~soundSeedGridArea,Rect(332,301,50,20));
+
 // sequencer controls
-	~caplay = Button(~soundseed_w,Rect(350,20,30,35));
-	~carestart_label = StaticText(~soundseed_w,Rect(385,20,60,15))
+	~soundSeedControlArea = CompositeView(~soundseed_w, Rect(viewx/2,0,400,350));
+
+	~caplay = Button(~soundSeedControlArea,Rect(0,0,70,70));
+
+	// cycle area
+	~soundSeedCycleArea = CompositeView(~soundSeedControlArea,Rect(130,10,245,50));
+	~carestart_label = StaticText(~soundSeedCycleArea,Rect(0,0,60,15))
 	.backColor_(Color.white).string_("mode").align_(\center);
-	~caloops_label = StaticText(~soundseed_w,Rect(445,20,60,15))
+	~caloops_label = StaticText(~soundSeedCycleArea,Rect(60,0,60,15))
 	.backColor_(Color.white).string_("cycle").align_(\center);
-	~caloop_current_label = StaticText(~soundseed_w,Rect(505,20,60,15))
+	~caloop_current_label = StaticText(~soundSeedCycleArea,Rect(115,0,60,15))
 	.backColor_(Color.white).string_("loop").align_(\center);
-	~carestart = Button(~soundseed_w,Rect(390,35,50,20));
-	~caloops = NumberBox(~soundseed_w,Rect(450,35,50,20))
+	~carestart = Button(~soundSeedCycleArea,Rect(5,15,50,20));
+	~caloops = NumberBox(~soundSeedCycleArea,Rect(65,15,50,20))
 	.value_(~maxloops).clipLo_(0).clipHi_(10000).decimals_(0)
 	.action_{|me| ~maxloops = me.value };
-	~caloop_current = NumberBox(~soundseed_w,Rect(510,35,50,20))
+	~caloop_current = NumberBox(~soundSeedCycleArea,Rect(120,15,50,20))
 	.value_(~currloop).clipLo_(0).decimals_(0).enabled_(false);
-// granular synthesis controls
-	~graintype = Button(~soundseed_w,Rect(350,60,50,30));
-	~grainfreqserie = Button(~soundseed_w,Rect(410,60,140,30));
-	~seriebasefreq = NumberBox(~soundseed_w,Rect(552,60,40,30));
-	~grain_dur_label = StaticText(~soundseed_w,Rect(350,95,50,15))
-	.backColor_(Color.white).string_("grain").align_(\center);
-	~grain_overlap_label =StaticText(~soundseed_w,Rect(400,95,60,15))
-	.backColor_(Color.white).string_(" overlap").align_(\center);
-	~grain_random_density_label = StaticText(~soundseed_w,Rect(460,95,60,15))
-	.backColor_(Color.white).string_("rnd").align_(\center);
-	~serie_alpha_label = StaticText(~soundseed_w,Rect(520,95,30,15))
-	.backColor_(Color.white).string_("α").align_(\center);
-	~serie_beta_label = StaticText(~soundseed_w,Rect(550,95,30,15))
-	.backColor_(Color.white).string_("β").align_(\center);
 
-	~grain_dur_number = NumberBox(~soundseed_w,Rect(350,110,45,20))
+	// frequency serie controls area
+	~soundSeedSerieArea = CompositeView(~soundSeedControlArea,Rect(0,90,320,50));
+	~graintype = Button(~soundSeedSerieArea,Rect(0,0,50,30));
+	~grainfreqserie = Button(~soundSeedSerieArea,Rect(60,0,140,30));
+	~seriebasefreq = NumberBox(~soundSeedSerieArea,Rect(210,0,40,30));
+	~serie_alpha_label = StaticText(~soundSeedSerieArea,Rect(260,0,30,15))
+	.backColor_(Color.white).string_("α").align_(\center);
+	~serie_beta_label = StaticText(~soundSeedSerieArea,Rect(290,0,30,15))
+	.backColor_(Color.white).string_("β").align_(\center);
+	~serie_alpha = Knob(~soundSeedSerieArea,Rect(260,15,30,30))
+	.value_(~alpha).step_(0.001)
+	.action_{|me|
+		var val;
+		val = ((me.value*~alphamul)+~alphadd).round(0.001);
+		~serie_alpha_view.string=("α:"++val); ~alpha=val
+	};
+	~serie_beta = Knob(~soundSeedSerieArea,Rect(290,15,30,30))
+	.value_(~beta).step_(0.001)
+	.action_{|me|
+		var val;
+		val = ((me.value*~betamul)+~betaadd).round(0.001);
+		~serie_beta_view.string=("β:"++val); ~beta=val
+	};
+
+	// grain control area
+	~soundSeedGrainArea = CompositeView(~soundSeedControlArea,Rect(0,150,170,40));
+	~grain_dur_label = StaticText(~soundSeedGrainArea,Rect(0,0,50,15))
+	.backColor_(Color.white).string_("grain").align_(\center);
+	~grain_overlap_label =StaticText(~soundSeedGrainArea,Rect(50,0,60,15))
+	.backColor_(Color.white).string_(" overlap").align_(\center);
+	~grain_random_density_label = StaticText(~soundSeedGrainArea,Rect(110,0,60,15))
+	.backColor_(Color.white).string_("rnd").align_(\center);
+	~grain_dur_number = NumberBox(~soundSeedGrainArea,Rect(0,15,45,20))
 	.value_(~grain_dur/1000).clipLo_(0.04).clipHi_(20).decimals_(3).step_(0.005)
 	.action_{|me|
 		var old_dur, delta_dur, bpm;
@@ -50,12 +89,10 @@
 		~timestep_viewer.string_("dT:"++~timestep++"c:"++bpm);
 		~grain_overlap_number.clipHi = (me.value-0.01);
 	};
-
-	~grain_fix_timestep = Button(~soundseed_w,Rect(395,112,15,15))
+	~grain_fix_timestep = Button(~soundSeedGrainArea,Rect(45,15,15,15))
 	.states_([["<>",Color.black,Color.gray],["<>",Color.black,Color.green]])
 	.font_("Courier",8);
-
-	~grain_overlap_number = NumberBox(~soundseed_w,Rect(410,110,45,20))
+	~grain_overlap_number = NumberBox(~soundSeedGrainArea,Rect(60,15,45,20))
 	.value_(~overlap/1000).clipLo_(0).clipHi_(5).decimals_(3).step_(0.005)
 	.action_{|me|
 		var old_ove, delta_ove, bpm;
@@ -71,57 +108,48 @@
 		bpm = ~timestep * 16;
 		~timestep_viewer.string_("dT:"++~timestep++"c:"++bpm);
 	};
-	~timestep_viewer = StaticText(~soundseed_w,Rect(350,132,115,15))
-	.backColor_(Color.black).string_("dT:"++~timestep++"c:"++(~timestep*16)).stringColor_(Color.green);
-
-	~grain_random_density_number = NumberBox(~soundseed_w,Rect(467,110,46,20))
+	~grain_random_density_number = NumberBox(~soundSeedGrainArea,Rect(117,15,46,20))
 	.value_(~rnd).clipLo_(0).clipHi_(20).decimals_(3).step_(0.005)
 	.action_{|me|
 		~rnd = me.value
 	};
-	~serie_alpha = Knob(~soundseed_w,Rect(520,110,30,30))
-	.value_(~alpha).step_(0.001)
-	.action_{|me|
-		var val;
-		val = ((me.value*~alphamul)+~alphadd).round(0.001);
-		~serie_alpha_view.string=("α:"++val); ~alpha=val };
-	~serie_alpha_view = StaticText(~soundseed_w,Rect(520,142,60,12))
+
+	// V O L U M E
+	~overall_amp_control = Slider(~soundSeedControlArea,Rect(340,0,40,300)).value_(~overall_amp)
+	.action_{|me| ~overall_amp = me.value; ~overall_amp_value.value = me.value.ampdb };
+	~overall_amp_value = NumberBox(~soundSeedControlArea,Rect(340,301,40,20))
+	.value_(~overall_amp.ampdb).align_(\center).enabled_(false).backColor_(Color.gray);
+
+	// CA Controls area
+	~soundSeedCAArea = CompositeView(~soundSeedControlArea,Rect(100,230,150,70));
+	~golButton = Button(~soundSeedCAArea,Rect(0,0,40,30));
+	~wolfButton = Button(~soundSeedCAArea,Rect(70,0,40,30));
+	~wolfRuleNumber = NumberBox(~soundSeedCAArea,Rect(112,0,30,30))
+	.value_(~wolframRule).clipLo_(1).clipHi_(256).decimals_(0)
+	.action_{|me| ~wolframRule = me.value.asInt };
+	~carandConfig = Button(~soundSeedCAArea,Rect(0,40,60,30));
+	~carandConfigSized = Button(~soundSeedCAArea,Rect(70,40,40,30));
+	~carandConfigSizedNbox = NumberBox(~soundSeedCAArea,Rect(112,40,30,30));
+
+	// viewer area - without CompositeView
+	~timestep_viewer = StaticText(~soundSeedControlArea,Rect(0,322,130,15))
+	.backColor_(Color.black).string_("dT:"++~timestep+"c:"++(~timestep*16)).stringColor_(Color.green)
+	.align_(\left).font_("Courier");
+	~serie_alpha_view = StaticText(~soundSeedControlArea,Rect(140,322,60,15))
 	.backColor_(Color.black).stringColor_(Color.green).align_(\left)
 	.font_("Courier").string_("α:"++~alpha);
-	~serie_beta = Knob(~soundseed_w,Rect(550,110,30,30))
-	.value_(~beta).step_(0.001)
-	.action_{|me|
-		var val;
-		val = ((me.value*~betamul)+~betaadd).round(0.001);
-		~serie_beta_view.string=("β:"++val); ~beta=val };
-	~serie_beta_view = StaticText(~soundseed_w,Rect(520,154,60,12))
+	~serie_beta_view = StaticText(~soundSeedControlArea,Rect(210,322,60,15))
 	.backColor_(Color.black).stringColor_(Color.green).align_(\left)
 	.font_("Courier").string_("β:"++~beta);
 
-	~overall_amp_control = Slider(~soundseed_w,Rect(530,180,40,130)).value_(~overall_amp)
-	.action_{|me| ~overall_amp = me.value; ~overall_amp_value.value = me.value.ampdb };
-	~overall_amp_value = NumberBox(~soundseed_w,Rect(530,310,40,20))
-	.value_(~overall_amp.ampdb).align_(\center).enabled_(false).backColor_(Color.gray);
-// CA Controls
-	~golButton = Button(~soundseed_w,Rect(370,170,40,30));
-	~wolfButton = Button(~soundseed_w,Rect(440,170,40,30));
-	~wolfRuleNumber = NumberBox(~soundseed_w,Rect(482,170,30,30))
-	.value_(~wolframRule).clipLo_(1).clipHi_(256).decimals_(0)
-	.action_{|me| ~wolframRule = me.value.asInt };
-	~carandConfig = Button(~soundseed_w,Rect(370,210,60,30));
-	~carandConfigSized = Button(~soundseed_w,Rect(440,210,40,30));
-	~carandConfigSizedNbox = NumberBox(~soundseed_w,Rect(482,210,30,30));
-// grid controls
-	~cleargridButton = Button(~soundseed_w,Rect(332,279,50,20));
-	~drawmodeButton = Button(~soundseed_w,Rect(332,301,50,20));
-// define GUI objects behaviour
+	// define GUI objects behaviour
 	~stepgrid
 	.setFillColor_(Color.red)
 	.setBackgrColor_(Color.white);
 	~caplay
 	.states_([
-		[">",Color.black,Color.gray],
-		[">",Color.black,Color.green]])
+		["PLAY >",Color.black,Color.gray],
+		["PLAY >",Color.black,Color.green]])
 	.action_({|me|
 		if (me.value==1){
 			~tas.play
@@ -134,7 +162,7 @@
 		["loop",Color.black,Color.green]])
 	.action_({|me|
 		~ss_cyclemode = me.value;
-	});
+	}).value_(1);
 	~graintype
 	.states_([
 		["Sine",Color.black,Color.white],
@@ -243,20 +271,23 @@
 	});
 	~serie_alpha.enabled_(false);
 	~serie_beta.enabled_(false);
-
+	/// Not used In Presentation BEGIN
 	// activate deactivate mapping panel
+	/*
 	~ss_mapping_panel_show = Button(~soundseed_w,Rect(0,340,600,10))
 	.states_([["v",Color.black,Color.gray],["/\\",Color.black,Color.gray]])
 	.action_{|me|
 		case
 		{me.value==0}{ ~soundseed_w.setTopLeftBounds(Rect(0, 0, 600, 350)) }
-		{me.value==1}{ ~soundseed_w.setTopLeftBounds(Rect(0, 0, 600, 800)) };
+		{me.value==1}{ ~soundseed_w.setTopLeftBounds(Rect(0, 0, 600, 600)) };
 	};
+	*/
+	/// Not used In Presentation END
 	////// mapping panel definition
-	~ss_mapping_panel_gui = CompositeView(~soundseed_w,Rect(0,350,600,450))
+	~ss_mapping_panel_gui = CompositeView(~soundseed_w,Rect(0,350,viewx,250))
 	.backColor_(Color.white);
 	~ss_mapping_panel_label = StaticText(~ss_mapping_panel_gui,Rect(0,0,600,20))
-	.string_("MAPPING PANEL",Color.black,Color.grey).align_(\center);
+	.string_("M A P P I N G   P A N E L",Color.black,Color.grey).align_(\center);
 
 	~ss_play_file_button = Button(~ss_mapping_panel_gui,Rect(210,20,90,40))
 	.states_([["P L A Y",Color.black,Color.green]])
@@ -281,21 +312,21 @@
 	.action_{|me| case
 //		{me.value==0} { /* off feature */ ~ss_onoff_map1_func.value(me.value,0) }
 //		{me.value==1} { /* on feature*/ ~ss_onoff_map1_func.value(me.value,0) }; };
-		{me.value==0} { /* off feature */ ~ss_onoff_map1_func.value(me.value,~ss_feature_select1.value,0) }
-		{me.value==1} { /* on feature*/ ~ss_onoff_map1_func.value(me.value,~ss_feature_select1.value,0) }; };
+		{me.value==0} { /* off feature */ ~ss_onoff_map1_func.value(me.value,~ss_feature_select.value) }
+		{me.value==1} { /* on feature*/ ~ss_onoff_map1_func.value(me.value,~ss_feature_select.value) }; };
 	~ss_from_in1 = Button(~ss_mapping_panel_gui,Rect(60,80,20,20))
 	.states_([["In"],["In",Color.black,Color.green]])
 	.action_{|me| case
 		{me.value==0} { /* off input */ ~ss_from_file1.value_(1) }
 		{me.value==1} { /* on input */ ~ss_from_file1.value_(0) }; }
-	.value_(1);
+	.value_(0);
 	~ss_from_file1 = Button(~ss_mapping_panel_gui,Rect(90,80,20,20))
 	.states_([["F"],["F",Color.black,Color.green]])
 	.action_{|me| case
 		{me.value==0} { /* off file */ ~ss_from_in1.value_(1) }
 		{me.value==1} { /* on file */ ~ss_from_in1.value_(0) }; }
-	.value_(0);
-	~ss_feature_select1 = ListView(~ss_mapping_panel_gui,Rect(130,80,150,20))
+	.value_(1);
+	~ss_feature_select = ListView(~ss_mapping_panel_gui,Rect(130,80,150,20))
 	.items_(["pitch","centroid","spread","Peakiness"])
 	.font_(Font("Courier",16))
 	.action_{|me|
@@ -303,11 +334,11 @@
 		offset = 5; // this is the number of parameters ranges present
 		min = ~ss_load_range.value(0,me.value+5);
 		max = ~ss_load_range.value(1,me.value+5);
-//		~ss_param_select1.items[me.value].postln;
+//		~ss_param_select.items[me.value].postln;
 		~ss_feat_min_range.clipLo_(min).clipHi_(max).value_(min);
 		~ss_feat_max_range.clipLo_(min).clipHi_(max).value_(max);
 	};
-	~ss_param_select1 = ListView(~ss_mapping_panel_gui,Rect(310,80,280,20))
+	~ss_param_select = ListView(~ss_mapping_panel_gui,Rect(310,80,280,20))
 	.items_(["Fundamental frequency","Grain length","Density","Serie Alpha", "Serie Beta"])
 	.font_(Font("Courier",16))
 	.action_{|me|
@@ -315,14 +346,14 @@
 		// load the range of specific parameter
 		min = ~ss_load_range.value(0,me.value);
 		max = ~ss_load_range.value(1,me.value);
-//		~ss_param_select1.items[me.value].postln;
+//		~ss_param_select.items[me.value].postln;
 		// set the number boxes values
 		~ss_param_min_range.clipLo_(min).clipHi_(max).value_(min);
 		~ss_param_max_range.clipLo_(min).clipHi_(max).value_(max);
 		// set the variables used for mapping
 		~ss_set_range.value(0,me.value,~ss_param_min_range.value);
 		~ss_set_range.value(1,me.value,~ss_param_max_range.value);
-	}.enabled_(\false).value_(0);
+	};
 
 	~ss_feat_min_range = NumberBox(~ss_mapping_panel_gui,Rect(130,105,70,20)).value_(0)
 	.decimals_(3).clipLo_(~featminfreq).clipHi_(~featmaxfreq).value_(~featminfreq)
@@ -335,84 +366,14 @@
 	.clipLo_(~ss_load_range.value(0,0))
 	.clipHi_(~ss_load_range.value(1,0))
 	.value_(~ss_load_range.value(0,0))
-	.action_{|me| ~ss_set_range.value(0,~ss_param_select1.value,me.value)}; //fixed value instead of param_se
+	.action_{|me| ~ss_set_range.value(0,~ss_param_select.value,me.value)};
 	~ss_param_max_range = NumberBox(~ss_mapping_panel_gui,Rect(390,105,70,20))
 	.decimals_(3)
 	.clipLo_(~ss_load_range.value(0,0))
 	.clipHi_(~ss_load_range.value(1,0))
 	.value_(~ss_load_range.value(1,0))
-	.action_{|me| ~ss_set_range.value(1,~ss_param_select1.value,me.value)};//fixed value instead of param_se
-	// mapping single control set END //
-
-	/// N E W ///
-	~ss_onoff_map2 = Button(~ss_mapping_panel_gui,Rect(20,140,20,20))
-	.states_([["I/O"],["I/O",Color.black,Color.green]])
-	.action_{|me| case
-//		{me.value==0} { /* off feature */ ~ss_onoff_map1_func.value(me.value,0) }
-//		{me.value==1} { /* on feature*/ ~ss_onoff_map1_func.value(me.value,0) }; };
-		{me.value==0} { /* off feature */ ~ss_onoff_map1_func.value(me.value,~ss_feature_select2.value,1) }
-		{me.value==1} { /* on feature*/ ~ss_onoff_map1_func.value(me.value,~ss_feature_select2.value,1) }; };
-	~ss_from_in2 = Button(~ss_mapping_panel_gui,Rect(60,140,20,20))
-	.states_([["In"],["In",Color.black,Color.green]])
-	.action_{|me| case
-		{me.value==0} { /* off input */ ~ss_from_file2.value_(1) }
-		{me.value==1} { /* on input */ ~ss_from_file2.value_(0) }; }
-	.value_(1);
-	~ss_from_file2 = Button(~ss_mapping_panel_gui,Rect(90,140,20,20))
-	.states_([["F"],["F",Color.black,Color.green]])
-	.action_{|me| case
-		{me.value==0} { /* off file */ ~ss_from_in2.value_(1) }
-		{me.value==1} { /* on file */ ~ss_from_in2.value_(0) }; }
-	.value_(0);
-	~ss_feature_select2 = ListView(~ss_mapping_panel_gui,Rect(130,140,150,20))
-	.items_(["pitch","centroid","spread","Peakiness"])
-	.font_(Font("Courier",16))
-	.action_{|me|
-		var min, max, offset;
-		offset = 5; // this is the number of parameters ranges present
-		min = ~ss_load_range.value(0,me.value+5);
-		max = ~ss_load_range.value(1,me.value+5);
-//		~ss_param_select1.items[me.value].postln;
-		~ss_feat_min_range2.clipLo_(min).clipHi_(max).value_(min);
-		~ss_feat_max_range2.clipLo_(min).clipHi_(max).value_(max);
-	};
-	~ss_param_select2 = ListView(~ss_mapping_panel_gui,Rect(310,140,280,20))
-	.items_(["Fundamental frequency","Grain length","Density","Serie Alpha", "Serie Beta"])
-	.font_(Font("Courier",16))
-	.action_{|me|
-		var min, max;
-		// load the range of specific parameter
-		min = ~ss_load_range.value(0,me.value);
-		max = ~ss_load_range.value(1,me.value);
-//		~ss_param_select1.items[me.value].postln;
-		// set the number boxes values
-		~ss_param_min_range2.clipLo_(min).clipHi_(max).value_(min);
-		~ss_param_max_range2.clipLo_(min).clipHi_(max).value_(max);
-		// set the variables used for mapping
-		~ss_set_range.value(0,me.value,~ss_param_min_range2.value);
-		~ss_set_range.value(1,me.value,~ss_param_max_range2.value);
-	}.enabled_(\false).value_(1);
-
-	~ss_feat_min_range2 = NumberBox(~ss_mapping_panel_gui,Rect(130,165,70,20)).value_(0)
-	.decimals_(3).clipLo_(~featminfreq).clipHi_(~featmaxfreq).value_(~featminfreq)
-	.action_{|me| ~featminfreq = me.value };
-	~ss_feat_max_range2 = NumberBox(~ss_mapping_panel_gui,Rect(210,165,70,20)).value_(20000)
-	.decimals_(3).clipLo_(~featminfreq).clipHi_(~featmaxfreq).value_(~featmaxfreq)
-	.action_{|me| ~featmaxfreq = me.value };
-	~ss_param_min_range2 = NumberBox(~ss_mapping_panel_gui,Rect(310,165,70,20))
-	.decimals_(3)
-	.clipLo_(~ss_load_range.value(0,1))
-	.clipHi_(~ss_load_range.value(1,1))
-	.value_(~ss_load_range.value(0,1))
-	.action_{|me| ~ss_set_range.value(0,~ss_param_select2.value,me.value)}; //fixed value instead of param_se
-	~ss_param_max_range2 = NumberBox(~ss_mapping_panel_gui,Rect(390,165,70,20))
-	.decimals_(3)
-	.clipLo_(~ss_load_range.value(0,1))
-	.clipHi_(~ss_load_range.value(1,1))
-	.value_(~ss_load_range.value(1,1))
-	.action_{|me| ~ss_set_range.value(1,~ss_param_select2.value,me.value)};//fixed value instead of param_se
-
-	/// NEW ///
+	.action_{|me| ~ss_set_range.value(1,~ss_param_select.value,me.value)};
+	// mapping single control set END
 };
 ////////// GUI END ///////////
 //// G U I   R E L A T E D   F U N C T I O N ////
@@ -427,23 +388,20 @@
 	buff
 };
 // check the input of the feature
-~ss_feature_input = {|action,numer,mapper|
+~ss_feature_input = {|action,numer|
 	// the function returns -1 if nothing selected, 1 for soundin, 2 for file input
 	var return, who, feature, control;
 	return = -255;
 	who = "~ss_extractor"+numer.asSymbol;
-	// feature = ~ss_feature_select1.value; // this comes in numer variable !!! check this out
-	feature = numer;
-	// control = ~ss_param_select1.value; // change with input param ...
-	control = mapper;
-	("this is control:"+control+"this is mapper:"+mapper).postln;
+	feature = ~ss_feature_select.value; // this comes in numer variable !!! check this out
+	control = ~ss_param_select.value;
 	if (~ss_from_in1.value==0) {
 		if (~ss_from_file1.value==0) {
 			"both file and soundin off - there's some error check implementation".postln;
 			return = -1;
 		} {
 			if (action==0) { // spengo
-				~ss_extractors[mapper].set(\gate, 0);
+				~ss_extractors[numer].set(\gate, 0);
 				"OFF input from file!".postln;
 				return = 2;
 			} { // accendo
@@ -452,19 +410,19 @@
 					// check the feature here
 					case
 					{numer==0}
-					{ ~ss_extractors.put(mapper,	Synth(\filePitchDetectControl,[\buffer, ~ss_filebuf,\outCbus, ~featurebus[mapper]])); }
+					{ ~ss_extractors.put(numer,	Synth(\filePitchDetectControl,[\buffer, ~ss_filebuf,\outCbus, ~featurebus[numer]])); }
 					{numer==1}
-					{ ~ss_extractors.put(mapper, Synth(\fileSpecCentroid,
-						[\buffer, ~ss_filebuf,\meanbuffer, ~ss_centroid_meanbuf,\outCbus, ~featurebus[mapper]])) }
+					{ ~ss_extractors.put(numer, Synth(\fileSpecCentroid,
+						[\buffer, ~ss_filebuf,\meanbuffer, ~ss_centroid_meanbuf,\outCbus, ~featurebus[numer]])) }
 					{numer==2}
-					{ ~ss_extractors.put(mapper, Synth(\fileSpecSpread,
-						[\buffer, ~ss_filebuf,\outCbus, ~featurebus[mapper]])) }
+					{ ~ss_extractors.put(numer, Synth(\fileSpecSpread,
+						[\buffer, ~ss_filebuf,\outCbus, ~featurebus[numer]])) }
 					{numer==3}
-					{ ~ss_extractors.put(mapper, Synth(\fileSpecCrest,
-						[\buffer, ~ss_filebuf, \outCbus, ~featurebus[mapper]])) };
+					{ ~ss_extractors.put(numer, Synth(\fileSpecCrest,
+						[\buffer, ~ss_filebuf, \outCbus, ~featurebus[numer]])) };
 					// end check feature
-					// ~currentbus = ~featurebus[mapper]; // obsolete
-					~mapping_busses_matrix.put(feature,control,~featurebus[mapper]);
+					~currentbus = ~featurebus[numer]; // obsolete
+					~mapping_busses_matrix.put(feature,control,~featurebus[numer]);
 					"ON input from file!".postln;
 					return = 2;
 				} {
@@ -478,21 +436,21 @@
 	if (~ss_from_in1.value==1) {
 		if (action==0) { // spengo
 			("spengo"+who).postln;
-			~ss_extractors[mapper].set(\gate, 0);
+			~ss_extractors[numer].set(\gate, 0);
 		} { // accendo
 			("accendo"+who).postln;
 			case
 			{numer==0}
-			{ ~ss_extractors.put(mapper, Synth(\inPitchDetectControl, [\outCbus, ~featurebus[mapper]])) }
+			{ ~ss_extractors.put(numer, Synth(\inPitchDetectControl, [\outCbus, ~featurebus[numer]])) }
 			{numer==1}
-			{ ~ss_extractors.put(mapper, Synth(\soundinSpecCentroid, [\outCbus, ~featurebus[mapper]])) }
+			{ ~ss_extractors.put(numer, Synth(\soundinSpecCentroid, [\outCbus, ~featurebus[numer]])) }
 			{numer==2}
-			{ ~ss_extractors.put(mapper, Synth(\soundinSpecSpread, [\outCbus, ~featurebus[mapper]])) }
+			{ ~ss_extractors.put(numer, Synth(\soundinSpecSpread, [\outCbus, ~featurebus[numer]])) }
 			{numer==3}
-			{ ~ss_extractors.put(mapper, Synth(\soundinSpecCrest, [\outCbus, ~featurebus[mapper]])) };
+			{ ~ss_extractors.put(numer, Synth(\soundinSpecCrest, [\outCbus, ~featurebus[numer]])) };
 			// set current bus in use
-			// ~currentbus = ~featurebus[numer]; // obsolete
-			~mapping_busses_matrix.put(feature,control,~featurebus[mapper]);
+			~currentbus = ~featurebus[numer]; // obsolete
+			~mapping_busses_matrix.put(feature,control,~featurebus[numer]);
 		};
 		"input from Soundin!".postln;
 		return = 1;
@@ -501,46 +459,43 @@
 };
 
 // check the feature selected and start the task
-~ss_mapping_set = {|action,number,mapper|
+~ss_mapping_set = {|action,number|
 	var feature,control;
-	// feature = ~ss_feature_select1.value;
-	// control = ~ss_param_select1.value; // change with input variable
-	feature = number;
-	control = mapper;
+	feature = ~ss_feature_select.value;
+	control = ~ss_param_select.value;
+	("Feat:"+feature+"Control:"+control).postln;
 	// retrieve the function from the two dimension array
 	if (action==1) {
-		("avvio il task:"+feature+control).postln;
 		~mapping_tasks_matrix.at(feature,control).start;
 	} {
-		("spengo il task:"+feature+control).postln;
 		~mapping_tasks_matrix.at(feature,control).stop;
 	};
 };
 
 // activate deactivate mapping
-~ss_onoff_map1_func = {|action,number,mapper|
+~ss_onoff_map1_func = {|action,number|
 	var input, feature, param;
 	// check and set input
-	input = ~ss_feature_input.value(action,number,mapper);
+	input = ~ss_feature_input.value(action,number);
 	if (input>=0) {
 		// check and set output and mapping
-		feature = ~ss_mapping_set.value(action,number,mapper);
+		feature = ~ss_mapping_set.value(action,number);
 
 		case
 		{ action == 0 } {
 			// actions on gui
 			~ss_from_in1.enabled_(\true);
 			~ss_from_file1.enabled_(\true);
-			~ss_feature_select1.enabled_(\true);
-			// ~ss_param_select1.enabled_(\true);
+			~ss_feature_select.enabled_(\true);
+			~ss_param_select.enabled_(\true);
 
 		}
 		{ action == 1 } {
 			// actions on gui
 			~ss_from_in1.enabled_(\false);
 			~ss_from_file1.enabled_(\false);
-			~ss_feature_select1.enabled_(\false);
-			~ss_param_select1.enabled_(\false);
+			~ss_feature_select.enabled_(\false);
+			~ss_param_select.enabled_(\false);
 
 		};
 
