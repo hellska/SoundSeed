@@ -22,6 +22,7 @@
 ~sized = 0; // Affect Random Function and define if it is sized or not
 ~currloop = 0; // cycle to count pattern loop
 ~maxloops = 5; // max cycles before next random configuration
+~ss_cyclemode = 1;
 ~synthez = "sinegrain"; // basename for the synth
 //// feature pitch range
 ~featminfreq = ~featminfreqdef = 20; // pitch detection range
@@ -49,6 +50,7 @@
 ~mapping_tasks_matrix = Array2D.new(4,5);
 ~mapping_busses_matrix = Array2D.new(4,5);
 //// F I L E S   L O A D ////
+~ss_filebuf = Buffer.read(s,~ss_basepath++"/sounds/flute.aiff"); // default file buffer
 (~ss_basepath++"sound_seed_sinegrain_synths.scd").standardizePath.load; // load sinegrain synths
 (~ss_basepath++"sound_seed_CA.scd").standardizePath.load; // load CA functions
 (~ss_basepath++"sound_seed_control_functions.scd").standardizePath.load; // load control functions

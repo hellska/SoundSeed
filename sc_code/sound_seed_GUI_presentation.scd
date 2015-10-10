@@ -1,3 +1,4 @@
+// ~sss_master_win.endFullScreen //
 // this function draws GUI objects
 ~sound_seed_GUI_creator = {
 	var screenx, screeny, viewx, viewy, viewxpos, viewypos;
@@ -7,8 +8,8 @@
 	viewy = 800;
 	viewxpos = (screenx/2)-(viewx/2);
 	viewypos = (screeny/2)-(viewy/2);
-	~sss_master_win = Window.new("SoundSeed").front.setTopLeftBounds(Rect(0, 0, screenx, screeny));
-//	~soundseed_w = Window.new("Sound Seed").front.setTopLeftBounds(Rect(0, 0, 600, 350)); //.fullScreen;
+	~sss_master_win = Window.new("SoundSeed").front.setTopLeftBounds(Rect(0, 0, screenx, screeny)).fullScreen;
+//	~soundseed_w = Window.new("Sound Seed").front.setTopLeftBounds(Rect(0, 0, 600, 350)).fullScreen;
 	~soundseed_w = CompositeView(~sss_master_win, Rect(viewxpos, viewypos, viewx, viewy));
 
 // grid controls
@@ -319,13 +320,13 @@
 	.action_{|me| case
 		{me.value==0} { /* off input */ ~ss_from_file1.value_(1) }
 		{me.value==1} { /* on input */ ~ss_from_file1.value_(0) }; }
-	.value_(0);
+	.value_(0).enabled_(\false);
 	~ss_from_file1 = Button(~ss_mapping_panel_gui,Rect(90,80,20,20))
 	.states_([["F"],["F",Color.black,Color.green]])
 	.action_{|me| case
 		{me.value==0} { /* off file */ ~ss_from_in1.value_(1) }
 		{me.value==1} { /* on file */ ~ss_from_in1.value_(0) }; }
-	.value_(1);
+	.value_(1).enabled_(\false);
 	~ss_feature_select = ListView(~ss_mapping_panel_gui,Rect(130,80,150,20))
 	.items_(["pitch","centroid","spread","Peakiness"])
 	.font_(Font("Courier",16))
@@ -373,6 +374,21 @@
 	.clipHi_(~ss_load_range.value(1,0))
 	.value_(~ss_load_range.value(1,0))
 	.action_{|me| ~ss_set_range.value(1,~ss_param_select.value,me.value)};
+
+
+	// File names list
+	~ss_file_list_array = ["Flute", "Harmonium", "Voices", "Drum", "Orchestra"];
+
+	~ss_file_list = ListView(~ss_mapping_panel_gui,Rect(600,20,100,100))
+	.items_(~ss_file_list_array)
+	.action_{|it| it.value.postln;
+		case
+		{it.value==0} { ~ss_filebuf = Buffer.read(s,~ss_basepath++"/sounds/flute.aiff") }
+		{it.value==1} { ~ss_filebuf = Buffer.read(s,~ss_basepath++"/sounds/harmonium.aiff") }
+		{it.value==2} { ~ss_filebuf = Buffer.read(s,~ss_basepath++"/sounds/street-voices.wav") }
+		{it.value==3} { ~ss_filebuf = Buffer.read(s,~ss_basepath++"/sounds/slow-drum-loop.wav") }
+		{it.value==4} { ~ss_filebuf = Buffer.read(s,~ss_basepath++"/sounds/orchestra-fragment.wav") };
+	};
 	// mapping single control set END
 };
 ////////// GUI END ///////////
@@ -410,16 +426,17 @@
 					// check the feature here
 					case
 					{numer==0}
-					{ ~ss_extractors.put(numer,	Synth(\filePitchDetectControl,[\buffer, ~ss_filebuf,\outCbus, ~featurebus[numer]])); }
+					{ ~ss_extractors.put(numer,	Synth(\filePitchDetectControl,
+						[\buffer, ~ss_filebuf,\outCbus, ~featurebus[numer], \amp, 0.1])); }
 					{numer==1}
 					{ ~ss_extractors.put(numer, Synth(\fileSpecCentroid,
-						[\buffer, ~ss_filebuf,\meanbuffer, ~ss_centroid_meanbuf,\outCbus, ~featurebus[numer]])) }
+						[\buffer, ~ss_filebuf,\meanbuffer, ~ss_centroid_meanbuf,\outCbus, ~featurebus[numer], \amp, 0.1])) }
 					{numer==2}
 					{ ~ss_extractors.put(numer, Synth(\fileSpecSpread,
-						[\buffer, ~ss_filebuf,\outCbus, ~featurebus[numer]])) }
+						[\buffer, ~ss_filebuf,\outCbus, ~featurebus[numer], \amp, 0.1])) }
 					{numer==3}
 					{ ~ss_extractors.put(numer, Synth(\fileSpecCrest,
-						[\buffer, ~ss_filebuf, \outCbus, ~featurebus[numer]])) };
+						[\buffer, ~ss_filebuf, \outCbus, ~featurebus[numer], \amp, 0.1])) };
 					// end check feature
 					~currentbus = ~featurebus[numer]; // obsolete
 					~mapping_busses_matrix.put(feature,control,~featurebus[numer]);
