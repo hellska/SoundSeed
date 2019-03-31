@@ -77,3 +77,6 @@
 // generate the first configuration
 ~randConfig.value(~gridside);
 
+// Change sound synthesis type
+(~ss_basepath++"sound_seed_sinegrain_synths.scd").standardizePath.load; // load SINE synths
+(~ss_basepath++"sound_seed_sawgrain_synths.scd").standardizePath.load; // load SAW synths

@@ -1,4 +1,4 @@
-// read column from the CA BoxGrid
+// read column from the CA BoxGrid and play SynthDefs
 ~readcol = {|col|
 	var my2d,bfreq,freq,length,amp,dur,harmonics,synthez,synthid;
 	bfreq = ~bsfreq ; // 80;
